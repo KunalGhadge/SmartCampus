@@ -5,8 +5,6 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
 
 import { ThemeProvider } from "@/lib/theme";
@@ -18,7 +16,6 @@ import { CatalogProvider, useCatalog } from "@/lib/catalog";
 import { ItemRequestsProvider } from "@/lib/item-requests-catalog";
 import { BackToTop } from "@/components/back-to-top";
 import { PublicProfileSync } from "@/components/public-profile-sync";
-import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
   return (
@@ -96,34 +93,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
     ],
   }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function WishlistBridge({ children }: { children: ReactNode }) {
   const { products } = useCatalog();
