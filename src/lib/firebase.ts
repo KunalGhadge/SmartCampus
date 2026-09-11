@@ -30,34 +30,13 @@ function envOrEmpty(key: string): string {
 }
 
 const firebaseConfig = {
-  apiKey: envOrEmpty("VITE_FIREBASE_API_KEY") || (import.meta.env.DEV ? devFirebaseFallback.apiKey : ""),
-  authDomain:
-    envOrEmpty("VITE_FIREBASE_AUTH_DOMAIN") ||
-    (import.meta.env.DEV ? devFirebaseFallback.authDomain : ""),
-  projectId:
-    envOrEmpty("VITE_FIREBASE_PROJECT_ID") ||
-    (import.meta.env.DEV ? devFirebaseFallback.projectId : ""),
-  appId: envOrEmpty("VITE_FIREBASE_APP_ID") || (import.meta.env.DEV ? devFirebaseFallback.appId : ""),
-  storageBucket:
-    envOrEmpty("VITE_FIREBASE_STORAGE_BUCKET") ||
-    (import.meta.env.DEV ? devFirebaseFallback.storageBucket : ""),
-  messagingSenderId:
-    envOrEmpty("VITE_FIREBASE_MESSAGING_SENDER_ID") ||
-    (import.meta.env.DEV ? devFirebaseFallback.messagingSenderId : ""),
+  apiKey: envOrEmpty("VITE_FIREBASE_API_KEY") || devFirebaseFallback.apiKey,
+  authDomain: envOrEmpty("VITE_FIREBASE_AUTH_DOMAIN") || devFirebaseFallback.authDomain,
+  projectId: envOrEmpty("VITE_FIREBASE_PROJECT_ID") || devFirebaseFallback.projectId,
+  appId: envOrEmpty("VITE_FIREBASE_APP_ID") || devFirebaseFallback.appId,
+  storageBucket: envOrEmpty("VITE_FIREBASE_STORAGE_BUCKET") || devFirebaseFallback.storageBucket,
+  messagingSenderId: envOrEmpty("VITE_FIREBASE_MESSAGING_SENDER_ID") || devFirebaseFallback.messagingSenderId,
 };
-
-const missingForProduction = requiredEnvKeys.filter((key) => !envOrEmpty(key));
-
-if (!import.meta.env.DEV && missingForProduction.length > 0) {
-  throw new Error(`Missing Firebase environment variables: ${missingForProduction.join(", ")}`);
-}
-
-if (import.meta.env.DEV && missingForProduction.length > 0) {
-  console.warn(
-    `[Firebase] Missing: ${missingForProduction.join(", ")} — using dev placeholders only. ` +
-      `Copy .env.example to .env and add your Firebase web config so Auth + Firestore work.`,
-  );
-}
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
