@@ -70,18 +70,18 @@ function Hero({ onRequestItem }: { onRequestItem: () => void }) {
           transition={{ duration: 0.6 }}
           className="mx-auto max-w-3xl text-center"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5 text-foreground" />
-            AI-powered campus marketplace · Pilot running across 8 campuses
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1 text-xs font-semibold text-primary backdrop-blur shadow-sm">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            MGM College Student Marketplace · Verified Campus Hub
           </span>
           <h1 className="mt-6 font-display text-5xl font-semibold italic leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
             Buy, sell & exchange
             <br />
-            <span className="text-brand-gradient">within your campus.</span>
+            <span className="text-brand-gradient">within MGM College.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            The trusted marketplace built exclusively for verified students. Books, gadgets, notes,
-            cycles, hostel essentials — all from people you can actually meet.
+            The trusted marketplace built exclusively for verified MGM students. Books, gadgets, notes,
+            cycles, hostel essentials — all from peers you can meet right on campus.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link to="/marketplace">
@@ -113,7 +113,7 @@ function Hero({ onRequestItem }: { onRequestItem: () => void }) {
           <div className="mx-auto mt-10 flex max-w-xl items-center gap-2 rounded-full border border-border bg-card px-4 py-3 shadow-soft">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
-              placeholder="Search for books, gadgets, calculators…"
+              placeholder="Search for books, gadgets, calculators on MGM campus…"
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
             <kbd className="hidden rounded-md border border-border bg-secondary px-2 py-0.5 text-[10px] text-muted-foreground sm:block">
@@ -155,10 +155,10 @@ function Hero({ onRequestItem }: { onRequestItem: () => void }) {
 
 function Stats() {
   const stats = [
-    { v: "8", l: "Pilot campuses" },
+    { v: "MGM", l: "Campus Network" },
     { v: "4.2K+", l: "Verified students" },
     { v: "12.6K", l: "Successful exchanges" },
-    { v: "4.8/5", l: "Average rating" },
+    { v: "4.9/5", l: "Student trust rating" },
   ];
   return (
     <section className="border-y border-border/60 bg-secondary/40">
@@ -589,18 +589,18 @@ function HowItWorks() {
   const steps = [
     {
       icon: BadgeCheck,
-      t: "Verify your student email",
-      d: "Sign up with your college email and get instantly verified.",
+      t: "Verify your MGM student ID",
+      d: "Sign up with your MGM student account or college email to get instantly verified.",
     },
     {
       icon: Search,
       t: "List or browse",
-      d: "Post your item in 30 seconds, or browse curated campus listings.",
+      d: "Post your item in 30 seconds, or browse curated MGM campus listings.",
     },
     {
       icon: MessageCircle,
-      t: "Chat & meet up",
-      d: "Message safely and coordinate a meet-up on campus.",
+      t: "Chat & meet up on campus",
+      d: "Message safely and coordinate a meet-up at the Central Library, Canteen, or Hostel.",
     },
   ];
   return (

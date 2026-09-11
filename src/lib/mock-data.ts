@@ -50,7 +50,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Rhea Kulkarni",
-      college: "MANIT Bhopal",
+      college: "MGM College",
       verified: true,
       rating: 4.9,
       avatar: "https://i.pravatar.cc/120?img=12",
@@ -78,7 +78,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Yash Tiwari",
-      college: "LNCT Bhopal",
+      college: "MGM CET",
       verified: true,
       rating: 4.8,
       avatar: "https://i.pravatar.cc/120?img=47",
@@ -107,7 +107,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Mihir Jain",
-      college: "RGPV University",
+      college: "MGM University",
       verified: true,
       rating: 5.0,
       avatar: "https://i.pravatar.cc/120?img=33",
@@ -305,7 +305,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Sneha Rao",
-      college: "MANIT Bhopal",
+      college: "MGM College",
       verified: true,
       rating: 4.7,
       avatar: "https://i.pravatar.cc/120?img=49",
@@ -336,7 +336,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Aditya Joshi",
-      college: "RGPV University",
+      college: "MGM University",
       verified: true,
       rating: 4.8,
       avatar: "https://i.pravatar.cc/120?img=11",
@@ -365,7 +365,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1536353284924-9220c464e262?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Kabir Shah",
-      college: "LNCT Bhopal",
+      college: "MGM CET",
       verified: true,
       rating: 4.6,
       avatar: "https://i.pravatar.cc/120?img=7",
@@ -399,23 +399,23 @@ export const categories: { name: Category; count: number }[] = [
 export const testimonials = [
   {
     name: "Pranav S.",
-    college: "MANIT Bhopal",
+    college: "MGM College",
     quote:
-      "I uploaded three first-year books during lunch and they were sold before evening. Verified profiles made the whole process feel safe.",
+      "I uploaded three first-year books during lunch and they were sold before evening. Verified MGM student profiles made the whole process feel safe.",
     avatar: "https://i.pravatar.cc/120?img=5",
   },
   {
     name: "Nikita J.",
-    college: "LNCT Bhopal",
+    college: "MGM CET (Engineering)",
     quote:
-      "I found a semester cycle rental in 15 minutes and coordinated pickup inside chat. No random bargaining, no confusion.",
+      "I found a semester cycle rental in 15 minutes and coordinated pickup near the central library. No random bargaining, no confusion.",
     avatar: "https://i.pravatar.cc/120?img=32",
   },
   {
     name: "Aman G.",
-    college: "RGPV University",
+    college: "MGM University",
     quote:
-      "The AI assistant helped me price my calculator and draft buyer replies. My listing moved in under a day.",
+      "The AI assistant helped me price my calculator and draft buyer replies. My listing moved in under a day on campus.",
     avatar: "https://i.pravatar.cc/120?img=17",
   },
 ];
@@ -508,7 +508,7 @@ export const itemRequests: ItemRequest[] = [
     description:
       "Need a complete drafter set with T-square, set squares, compass and mini drafter for mechanical graphics lab next week.",
     urgency: "High",
-    campus: "LNCT Bhopal",
+    campus: "MGM CET (Engineering)",
     department: "Mechanical",
     postedAgo: "14 min ago",
     student: { name: "Rahul Verma", avatar: "https://i.pravatar.cc/120?img=52", verified: true },
@@ -523,7 +523,7 @@ export const itemRequests: ItemRequest[] = [
     description:
       "Looking for a portable cooler or premium table fan for summer. Low-noise preferred for shared hostel room.",
     urgency: "Urgent",
-    campus: "Technocrats Institute",
+    campus: "MGM College",
     department: "CSE",
     postedAgo: "42 min ago",
     student: { name: "Priya Nair", avatar: "https://i.pravatar.cc/120?img=44", verified: true },
@@ -538,7 +538,7 @@ export const itemRequests: ItemRequest[] = [
     description:
       "Need a coding monitor with HDMI input for project work. 1080p or better and no dead pixels.",
     urgency: "Medium",
-    campus: "MANIT Bhopal",
+    campus: "MGM University",
     department: "CSE",
     postedAgo: "2 hours ago",
     student: { name: "Arjun Khanna", avatar: "https://i.pravatar.cc/120?img=18", verified: true },
@@ -553,8 +553,8 @@ export const itemRequests: ItemRequest[] = [
     description:
       "Need complete revision notes for Data Structures and OS with diagrams and previous year questions.",
     urgency: "High",
-    campus: "SIRT Bhopal",
-    department: "CSE",
+    campus: "MGM IT & CS Dept",
+    department: "IT",
     postedAgo: "31 min ago",
     student: { name: "Kavya Joshi", avatar: "https://i.pravatar.cc/120?img=41", verified: false },
   },
@@ -568,7 +568,7 @@ export const itemRequests: ItemRequest[] = [
     description:
       "Need a reliable scientific calculator before internals this week. Original Casio preferred.",
     urgency: "Urgent",
-    campus: "RGPV Bhopal",
+    campus: "MGM CET (Engineering)",
     department: "ECE",
     postedAgo: "26 min ago",
     student: { name: "Siddharth Rao", avatar: "https://i.pravatar.cc/120?img=60", verified: true },
@@ -583,8 +583,8 @@ export const itemRequests: ItemRequest[] = [
     description:
       "Need a compact foldable table for hostel room setup. Prefer sturdy legs and space for laptop + notebook.",
     urgency: "Low",
-    campus: "Oriental Group of Institutes",
-    department: "MBA",
+    campus: "MGM Campus",
+    department: "Management",
     postedAgo: "4 hours ago",
     student: { name: "Nisha Agarwal", avatar: "https://i.pravatar.cc/120?img=25", verified: true },
   },

@@ -1,13 +1,13 @@
 import * as React from "react";
 
 export const CAMPUSES = [
-  "Technocrats",
-  "LNCT",
-  "Oriental",
-  "SIRT",
-  "Bansal",
-  "RGPV",
-  "MANIT",
+  "MGM College",
+  "MGM CET (Engineering)",
+  "MGM University",
+  "MGM Campus",
+  "MGM IT & CS Dept",
+  "MGM Medical & Health",
+  "MGM Architecture",
 ] as const;
 
 export type CampusName = (typeof CAMPUSES)[number];
@@ -24,7 +24,7 @@ const STORAGE_KEY = "smartcampus:campus:v1";
 export function CampusProvider({ children }: { children: React.ReactNode }) {
   const [campus, setCampusState] = React.useState<CampusName | null>(() => {
     if (typeof window === "undefined") {
-      return null;
+      return "MGM College";
     }
 
     try {
@@ -33,7 +33,7 @@ export function CampusProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
-    return null;
+    return "MGM College";
   });
 
   const setCampus = React.useCallback((c: CampusName) => {
