@@ -13,11 +13,14 @@ create table if not exists public.profiles (
   id uuid references auth.users on delete cascade primary key,
   email text,
   full_name text,
+  display_name text,
   avatar_url text,
-  college text default 'SmartCampus University',
+  college text default 'MGM College',
+  campus text default 'MGM College',
   department text,
   graduation_year text,
   verified boolean default false,
+  email_verified boolean default false,
   trust_score integer default 95,
   badges text[] default array['Student', 'Verified Email']::text[],
   created_at timestamptz default now(),
@@ -42,14 +45,22 @@ create policy "Users can update their own profile."
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, full_name, avatar_url, verified)
+  insert into public.profiles (id, email, full_name, display_name, avatar_url, verified, email_verified, campus, college)
   values (
     new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', 'https://api.dicebear.com/7.x/avataaars/svg?seed=' || new.id),
-    coalesce((new.raw_user_meta_data->>'email_verified')::boolean, false)
-  );
+    coalesce((new.raw_user_meta_data->>'email_verified')::boolean, false),
+    coalesce((new.raw_user_meta_data->>'email_verified')::boolean, false),
+    'MGM College',
+    'MGM College'
+  )
+  on conflict (id) do update
+  set
+    email = excluded.email,
+    updated_at = now();
   return new;
 end;
 $$ language plpgsql security definer;
@@ -208,10 +219,11 @@ create policy "Authenticated users can send messages."
   to authenticated
   with check ( true );
 
--- Enable Realtime publication for messages and listings
+-- Enable Realtime publication for messages, listings, item requests, and profiles
 alter publication supabase_realtime add table public.messages;
 alter publication supabase_realtime add table public.listings;
 alter publication supabase_realtime add table public.item_requests;
+alter publication supabase_realtime add table public.profiles;
 
 
 -- ------------------------------------------------------------------------------

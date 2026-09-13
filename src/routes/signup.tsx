@@ -52,6 +52,12 @@ function SignupPage() {
     }
   };
 
+  const handleAppleSignUp = () => {
+    toast.info("Apple Sign-In is coming soon!", {
+      description: "Please continue with Google or your MGM College email.",
+    });
+  };
+
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <AuthAside />
@@ -81,7 +87,7 @@ function SignupPage() {
 
               <div className="mt-7 grid gap-2">
                 <SocialBtn provider="Google" onClick={handleGoogleSignUp} disabled={loading} />
-                <SocialBtn provider="Apple" disabled title="Apple sign-in is not configured yet." />
+                <SocialBtn provider="Apple" onClick={handleAppleSignUp} disabled={loading} />
               </div>
               <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
                 <div className="h-px flex-1 bg-border" /> OR{" "}
