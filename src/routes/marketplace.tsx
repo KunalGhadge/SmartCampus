@@ -122,7 +122,7 @@ function MarketplacePage() {
               Marketplace
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Discover what your campus is buying, selling and renting today.
+              Discover what MGM College students are buying, selling and renting today on SmartCampus.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -131,7 +131,7 @@ function MarketplacePage() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search listings…"
+                  placeholder="Search MGM College listings…"
                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>

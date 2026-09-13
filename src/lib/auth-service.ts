@@ -113,7 +113,12 @@ export async function signupWithEmail(
 
 export async function loginWithGoogle(): Promise<void> {
   if (isSupabaseConfigured) {
-    const redirectUrl = typeof window !== "undefined" ? `${window.location.origin}/dashboard` : undefined;
+    const origin =
+      typeof window !== "undefined" && window.location.origin
+        ? window.location.origin
+        : "https://smart-campus-pearl.vercel.app";
+    const redirectUrl = `${origin}/dashboard`;
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {

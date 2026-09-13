@@ -79,17 +79,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "SmartCampus - The Trusted Marketplace for Students" },
+      { title: "SmartCampus MGM - The Trusted Marketplace for MGM College" },
       {
         name: "description",
         content:
-          "Buy, sell, rent and exchange books, gadgets, notes and essentials with verified students across your campus.",
+          "Buy, sell, rent and exchange books, gadgets, notes and essentials with verified students across MGM College.",
       },
-      { name: "author", content: "SmartCampus" },
-      { property: "og:title", content: "SmartCampus - The Trusted Marketplace for Students" },
+      { name: "author", content: "SmartCampus MGM" },
+      { property: "og:title", content: "SmartCampus MGM - Student Marketplace for MGM College" },
       {
         property: "og:description",
-        content: "Buy, sell, rent and exchange resources with verified students on your campus.",
+        content: "Buy, sell, rent and exchange resources with verified students across MGM College.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },

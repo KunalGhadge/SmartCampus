@@ -82,8 +82,8 @@ export async function askCampusAI(messages: ChatMessage[]): Promise<string> {
   const systemPrompt: ChatMessage = {
     role: "system",
     content:
-      "You are the SmartCampus AI Assistant, a helpful and knowledgeable guide for a university marketplace and student campus ecosystem. " +
-      "Help students find study materials, textbooks, electronics, cycle rentals, and campus tips. " +
+      "You are the SmartCampus AI Assistant, a helpful and knowledgeable guide for MGM College student marketplace and campus ecosystem. " +
+      "Help MGM College students find study materials, textbooks, electronics, cycle rentals, and campus tips. " +
       "Be concise, friendly, and practical. Format with clean markdown.",
   };
 

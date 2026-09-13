@@ -76,7 +76,7 @@ function SignupPage() {
                 Create your account
               </h1>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                Use your college email to get verified instantly.
+                Use your MGM College email to get verified instantly.
               </p>
 
               <div className="mt-7 grid gap-2">
@@ -100,9 +100,9 @@ function SignupPage() {
                 />
                 <Field
                   icon={Mail}
-                  label="College email"
+                  label="MGM College email"
                   type="email"
-                  placeholder="name@university.edu"
+                  placeholder="student@mgmcollege.edu"
                   autoComplete="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}

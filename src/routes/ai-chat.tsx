@@ -32,7 +32,7 @@ function AIChatPage() {
   const [messages, setMessages] = useState<AIChatMessage[]>([
     {
       id: "welcome",
-      text: "Hi! 👋 I'm your SmartCampus AI Assistant powered by Groq. I can help you find textbooks, review campus pricing, suggest hostel essentials, and recommend items based on your semester. What are you looking for today?",
+      text: "Hi! 👋 I'm your SmartCampus AI Assistant for MGM College. I can help you find textbooks, review campus pricing, suggest hostel essentials, and recommend items for MGM College students. What are you looking for today?",
       sender: "assistant",
       timestamp: new Date(),
     },
