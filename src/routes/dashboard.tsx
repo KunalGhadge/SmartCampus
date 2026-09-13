@@ -216,11 +216,6 @@ function DashboardPage() {
                   Your dashboard
                 </h1>
                 <p className="mt-1 text-xs text-muted-foreground">Signed in as {email}</p>
-                {profile?.source === "firebase" ? (
-                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                    Backend profile is unavailable; using Firebase fallback data.
-                  </p>
-                ) : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -244,7 +239,7 @@ function DashboardPage() {
           {/* Stats */}
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { i: Package, label: "Your listings", v: String(myListings.length), t: "Firestore" },
+              { i: Package, label: "Your listings", v: String(myListings.length), t: "Supabase" },
               { i: Heart, label: "Wishlist", v: String(wishlist.count), t: "This device" },
               { i: MessageCircle, label: "Messages", v: "Open", t: "Peer chat" },
               {
@@ -643,7 +638,7 @@ function DashboardPage() {
                 <DialogHeader>
                   <DialogTitle>New listing</DialogTitle>
                   <DialogDescription>
-                    Listings are stored in Firebase Firestore and merged with the curated demo
+                    Listings are stored in Supabase and merged with the curated demo
                     catalog everywhere shoppers browse.
                   </DialogDescription>
                 </DialogHeader>

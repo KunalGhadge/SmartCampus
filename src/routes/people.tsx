@@ -7,7 +7,6 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CAMPUSES, useCampus } from "@/lib/campus";
-import { isFirebaseConfigured } from "@/lib/firebase";
 import {
   subscribePublicProfiles,
   type PublicProfileDoc,
@@ -28,7 +27,7 @@ function PeoplePage() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!isFirebaseConfigured || typeof window === "undefined") {
+    if (typeof window === "undefined") {
       setProfiles([]);
       setLoading(false);
       setError(null);
@@ -116,11 +115,6 @@ function PeoplePage() {
               </p>
             ) : null}
 
-            {!isFirebaseConfigured ? (
-              <p className="mt-4 text-xs text-amber-600 dark:text-amber-400">
-                Firebase env vars are not configured — people discovery syncs after you add `.env`.
-              </p>
-            ) : null}
             {error ? (
               <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-2 text-xs text-destructive">
                 People discovery is temporarily offline. Showing cached profile rows only.
@@ -134,7 +128,7 @@ function PeoplePage() {
             <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
               <Users className="mx-auto h-10 w-10 text-muted-foreground/70" />
               <p className="mt-3 font-medium text-foreground">Sign in to appear here yourself</p>
-              <p className="mt-1">Your profile row saves automatically once Firebase + Auth are active.</p>
+              <p className="mt-1">Your profile row saves automatically once your account is active.</p>
               <div className="mt-4 flex justify-center gap-2">
                 <Link to="/login">
                   <Button variant="outline" className="rounded-full">

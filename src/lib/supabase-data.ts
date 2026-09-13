@@ -268,3 +268,101 @@ export async function uploadImageToSupabase(
   const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
   return data.publicUrl;
 }
+
+export interface SupabaseProfileRow {
+  id: string;
+  full_name?: string | null;
+  display_name?: string | null;
+  email?: string | null;
+  campus?: string | null;
+  avatar_url?: string | null;
+  email_verified?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export async function fetchSupabaseProfiles(): Promise<
+  {
+    firebaseUid: string;
+    displayName: string;
+    displayNameLower: string;
+    campusKey: string;
+    photoUrl: string | null;
+    emailVerified: boolean;
+  }[]
+> {
+  if (!isSupabaseConfigured) return [];
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .limit(200);
+
+  if (error) {
+    console.error("Error fetching Supabase profiles:", error);
+    return [];
+  }
+
+  return (data as SupabaseProfileRow[]).map((p) => {
+    const name = p.display_name || p.full_name || p.email?.split("@")[0] || "Student";
+    return {
+      firebaseUid: p.id,
+      displayName: name,
+      displayNameLower: name.toLowerCase(),
+      campusKey: p.campus || "",
+      photoUrl: p.avatar_url || null,
+      emailVerified: Boolean(p.email_verified),
+    };
+  });
+}
+
+export async function fetchSupabaseProfileById(uid: string): Promise<{
+  firebaseUid: string;
+  displayName: string;
+  displayNameLower: string;
+  campusKey: string;
+  photoUrl: string | null;
+  emailVerified: boolean;
+} | null> {
+  if (!isSupabaseConfigured || !uid) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", uid)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  const p = data as SupabaseProfileRow;
+  const name = p.display_name || p.full_name || p.email?.split("@")[0] || "Student";
+  return {
+    firebaseUid: p.id,
+    displayName: name,
+    displayNameLower: name.toLowerCase(),
+    campusKey: p.campus || "",
+    photoUrl: p.avatar_url || null,
+    emailVerified: Boolean(p.email_verified),
+  };
+}
+
+export async function upsertSupabaseProfile(
+  user: { uid: string; email: string | null; displayName: string | null; photoURL: string | null; emailVerified: boolean },
+  campus: string | null,
+): Promise<void> {
+  if (!isSupabaseConfigured || !user.uid) return;
+  const { error } = await supabase.from("profiles").upsert(
+    {
+      id: user.uid,
+      email: user.email,
+      full_name: user.displayName,
+      display_name: user.displayName,
+      avatar_url: user.photoURL,
+      campus: campus ?? "",
+      email_verified: user.emailVerified,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" },
+  );
+  if (error) {
+    console.warn("Error upserting Supabase profile:", error);
+  }
+}
+

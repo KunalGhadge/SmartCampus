@@ -1,5 +1,4 @@
 import * as React from "react";
-import { isFirebaseConfigured } from "@/lib/firebase";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import {
   fetchSupabaseItemRequests,
@@ -7,7 +6,6 @@ import {
   type SupabaseItemRequestRow,
 } from "@/lib/supabase-data";
 import { itemRequests as seedRequests, type ItemRequest } from "@/lib/mock-data";
-import { subscribeItemRequestsFromFirestore } from "@/lib/firestore-item-requests";
 
 export type ItemRequestsContextValue = {
   requests: ItemRequest[];
@@ -26,7 +24,6 @@ export function ItemRequestsProvider({ children }: { children: React.ReactNode }
   React.useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    // 1. Supabase Support
     if (isSupabaseConfigured) {
       setLoading(true);
       fetchSupabaseItemRequests()
@@ -69,25 +66,6 @@ export function ItemRequestsProvider({ children }: { children: React.ReactNode }
       };
     }
 
-    // 2. Firestore Support
-    if (isFirebaseConfigured) {
-      setLoading(true);
-      setError(null);
-      return subscribeItemRequestsFromFirestore(
-        (rows) => {
-          setLive(rows);
-          setLoading(false);
-          setError(null);
-        },
-        (err) => {
-          setLive([]);
-          setLoading(false);
-          setError(err);
-        },
-      );
-    }
-
-    // 3. Fallback demo mode
     setLoading(false);
     setError(null);
     return undefined;

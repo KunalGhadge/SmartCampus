@@ -1,7 +1,4 @@
 import * as React from "react";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { firestoreDocToProduct } from "@/lib/firestore-listings";
 import { products as seedProducts, type Category, type Product } from "@/lib/mock-data";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { fetchSupabaseListings, supabaseRowToProduct, type SupabaseListingRow } from "@/lib/supabase-data";
@@ -52,7 +49,6 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    // 1. If Supabase is configured, use Supabase as the primary backend with Realtime
     if (isSupabaseConfigured) {
       setLoading(true);
       fetchSupabaseListings()
@@ -94,46 +90,23 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    // 2. If Firebase is configured, use Firestore
-    if (isFirebaseConfigured) {
-      setLoading(true);
-      const unsub = onSnapshot(
-        collection(db, "listings"),
-        (snap) => {
-          const next: Product[] = [];
-          snap.forEach((docSnap) => {
-            const p = firestoreDocToProduct(docSnap.id, docSnap.data() as Record<string, unknown>);
-            if (p) next.push(p);
-          });
-          setRemoteProducts(next);
-          setLoading(false);
-          setFirestoreLinked(true);
-          setFirestoreError(null);
-        },
-        (err) => {
-          console.error("Firestore error:", err);
-          setRemoteProducts([]);
-          setLoading(false);
-          setFirestoreLinked(false);
-          setFirestoreError(err instanceof Error ? err : new Error(String(err)));
-        },
-      );
-
-      return unsub;
-    }
-
-    // 3. Fallback demo mode
     setLoading(false);
-    setFirestoreLinked(false);
-    setFirestoreError(null);
     return undefined;
   }, []);
 
-  const products = React.useMemo(() => mergeCatalog(seedProducts, remoteProducts), [remoteProducts]);
+  const merged = React.useMemo(
+    () => mergeCatalog(seedProducts, remoteProducts),
+    [remoteProducts],
+  );
 
   const value = React.useMemo(
-    () => ({ products, loading, firestoreLinked, firestoreError }),
-    [products, loading, firestoreLinked, firestoreError],
+    () => ({
+      products: merged,
+      loading,
+      firestoreLinked,
+      firestoreError,
+    }),
+    [merged, loading, firestoreLinked, firestoreError],
   );
 
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
@@ -141,6 +114,8 @@ export function CatalogProvider({ children }: { children: React.ReactNode }) {
 
 export function useCatalog() {
   const ctx = React.useContext(CatalogContext);
-  if (!ctx) throw new Error("useCatalog must be used within CatalogProvider");
+  if (!ctx) {
+    throw new Error("useCatalog must be used within CatalogProvider");
+  }
   return ctx;
 }

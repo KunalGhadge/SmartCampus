@@ -279,14 +279,6 @@ export function Navbar() {
                     </span>
                   )}
                   <span className="max-w-28 truncate">{displayName}</span>
-                  {profile?.source === "firebase" ? (
-                    <span
-                      className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300"
-                      title="Using fallback profile data because backend profile is unavailable."
-                    >
-                      fallback
-                    </span>
-                  ) : null}
                 </Button>
               </Link>
               <Button

@@ -8,7 +8,6 @@ import {
   fetchPublicProfile,
   type PublicProfileDoc,
 } from "@/lib/public-profile-firestore";
-import { isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
@@ -24,11 +23,6 @@ function PublicProfilePage() {
 
   useEffect(() => {
     let cancelled = false;
-    if (!isFirebaseConfigured) {
-      setProfile(null);
-      setLoading(false);
-      return undefined;
-    }
 
     void fetchPublicProfile(userId).then((p) => {
       if (!cancelled) {
@@ -45,7 +39,6 @@ function PublicProfilePage() {
   const chatDisabledReason =
     !user ? "sign-in"
     : user.uid === userId ? "self"
-    : !isFirebaseConfigured ? "firebase"
     : null;
 
   const chatSearch =
@@ -77,7 +70,7 @@ function PublicProfilePage() {
             <div className="rounded-2xl border border-border bg-card p-10 text-center">
               <h1 className="text-xl font-semibold">Profile not found</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                This student hasn’t published a directory profile yet, or Firebase isn’t wired up locally.
+                This student hasn’t published a directory profile yet.
               </p>
               <Link to="/people">
                 <Button className="mt-6 rounded-full">Browse people</Button>
@@ -131,19 +124,13 @@ function PublicProfilePage() {
                             toast.message("Sign in to chat", {
                               description: "Create an account so messaging stays accountable.",
                             });
-                          } else if (chatDisabledReason === "firebase") {
-                            toast.message("Firebase required", {
-                              description: "Add env vars from .env.example so profiles & chat work.",
-                            });
                           }
                         }}
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
                         {chatDisabledReason === "self"
                           ? "This is you"
-                          : chatDisabledReason === "sign-in"
-                            ? "Sign in to chat"
-                            : "Configure Firebase to chat"}
+                          : "Sign in to chat"}
                       </Button>
                     )}
                     <Link to="/marketplace">

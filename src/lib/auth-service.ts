@@ -1,18 +1,4 @@
 import { supabase, isSupabaseConfigured } from "./supabase";
-import {
-  auth as firebaseAuth,
-  googleProvider,
-  isFirebaseConfigured,
-  getFirebaseAuthErrorMessage,
-} from "./firebase";
-import {
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  createUserWithEmailAndPassword,
-  updateProfile,
-  signOut as firebaseSignOut,
-  type User as FirebaseUser,
-} from "firebase/auth";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 export interface AppAuthUser {
@@ -53,34 +39,14 @@ export function mapSupabaseUserToAppUser(user: SupabaseUser): AppAuthUser {
   };
 }
 
-export function mapFirebaseUserToAppUser(user: FirebaseUser): AppAuthUser {
-  return {
-    uid: user.uid,
-    email: user.email,
-    displayName: user.displayName,
-    photoURL: user.photoURL,
-    emailVerified: user.emailVerified,
-    getIdToken: (force?: boolean) => user.getIdToken(force),
-    metadata: {
-      creationTime: user.metadata.creationTime,
-      lastSignInTime: user.metadata.lastSignInTime,
-    },
-  };
-}
-
 export async function loginWithEmail(email: string, pass: string): Promise<AppAuthUser> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: pass,
-    });
-    if (error) throw error;
-    if (!data.user) throw new Error("No user returned from Supabase sign in.");
-    return mapSupabaseUserToAppUser(data.user);
-  }
-
-  const cred = await signInWithEmailAndPassword(firebaseAuth, email, pass);
-  return mapFirebaseUserToAppUser(cred.user);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password: pass,
+  });
+  if (error) throw error;
+  if (!data.user) throw new Error("No user returned from sign in.");
+  return mapSupabaseUserToAppUser(data.user);
 }
 
 export async function signupWithEmail(
@@ -88,58 +54,39 @@ export async function signupWithEmail(
   pass: string,
   displayName?: string,
 ): Promise<AppAuthUser> {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password: pass,
-      options: {
-        data: {
-          full_name: displayName,
-          name: displayName,
-        },
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: pass,
+    options: {
+      data: {
+        full_name: displayName,
+        name: displayName,
       },
-    });
-    if (error) throw error;
-    if (!data.user) throw new Error("No user returned from Supabase sign up.");
-    return mapSupabaseUserToAppUser(data.user);
-  }
-
-  const cred = await createUserWithEmailAndPassword(firebaseAuth, email, pass);
-  if (displayName) {
-    await updateProfile(cred.user, { displayName });
-  }
-  return mapFirebaseUserToAppUser(cred.user);
+    },
+  });
+  if (error) throw error;
+  if (!data.user) throw new Error("No user returned from sign up.");
+  return mapSupabaseUserToAppUser(data.user);
 }
 
 export async function loginWithGoogle(): Promise<void> {
-  if (isSupabaseConfigured) {
-    const origin =
-      typeof window !== "undefined" && window.location.origin
-        ? window.location.origin
-        : "https://smart-campus-pearl.vercel.app";
-    const redirectUrl = `${origin}/dashboard`;
+  const origin =
+    typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : "https://smart-campus-pearl.vercel.app";
+  const redirectUrl = `${origin}/dashboard`;
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: redirectUrl,
-      },
-    });
-    if (error) throw error;
-    return;
-  }
-
-  const cred = await signInWithPopup(firebaseAuth, googleProvider);
-  return;
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: redirectUrl,
+    },
+  });
+  if (error) throw error;
 }
 
 export async function logoutUser(): Promise<void> {
-  if (isSupabaseConfigured) {
-    await supabase.auth.signOut();
-  }
-  if (isFirebaseConfigured) {
-    await firebaseSignOut(firebaseAuth);
-  }
+  await supabase.auth.signOut();
 }
 
 export function formatAuthErrorMessage(error: unknown): string {
@@ -147,5 +94,5 @@ export function formatAuthErrorMessage(error: unknown): string {
     const msg = (error as { message?: string }).message;
     if (msg) return msg;
   }
-  return getFirebaseAuthErrorMessage(error);
+  return "Authentication failed. Please check your credentials and try again.";
 }
