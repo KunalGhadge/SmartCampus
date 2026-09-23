@@ -146,6 +146,51 @@ export async function createSupabaseListing(payload: {
   return data?.id || null;
 }
 
+export async function updateSupabaseListingStatus(
+  id: string,
+  availability: "Available" | "Reserved" | "Sold",
+): Promise<boolean> {
+  if (!isSupabaseConfigured || !id) return true;
+
+  const { error } = await supabase
+    .from("listings")
+    .update({ availability, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating listing status in Supabase:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function deleteSupabaseListing(id: string): Promise<boolean> {
+  if (!isSupabaseConfigured || !id) return true;
+
+  const { error } = await supabase.from("listings").delete().eq("id", id);
+
+  if (error) {
+    console.error("Error deleting listing in Supabase:", error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function fetchSupabaseListingById(id: string): Promise<Product | null> {
+  if (!isSupabaseConfigured || !id) return null;
+
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return supabaseRowToProduct(data as SupabaseListingRow);
+}
+
 export interface SupabaseItemRequestRow {
   id: string;
   item_name: string;
@@ -281,6 +326,49 @@ export interface SupabaseProfileRow {
   updated_at?: string | null;
 }
 
+export const SEEDED_CAMPUS_PEERS = [
+  {
+    firebaseUid: "user_rhea",
+    displayName: "Rhea Kulkarni",
+    displayNameLower: "rhea kulkarni",
+    campusKey: "MGM College",
+    photoUrl: "https://i.pravatar.cc/120?img=12",
+    emailVerified: true,
+  },
+  {
+    firebaseUid: "user_yash",
+    displayName: "Yash Tiwari",
+    displayNameLower: "yash tiwari",
+    campusKey: "MGM College",
+    photoUrl: "https://i.pravatar.cc/120?img=47",
+    emailVerified: true,
+  },
+  {
+    firebaseUid: "user_ananya",
+    displayName: "Ananya Sharma",
+    displayNameLower: "ananya sharma",
+    campusKey: "MGM College",
+    photoUrl: "https://i.pravatar.cc/120?img=32",
+    emailVerified: true,
+  },
+  {
+    firebaseUid: "user_rohit",
+    displayName: "Rohit Verma",
+    displayNameLower: "rohit verma",
+    campusKey: "MGM College",
+    photoUrl: "https://i.pravatar.cc/120?img=53",
+    emailVerified: true,
+  },
+  {
+    firebaseUid: "user_aditi",
+    displayName: "Aditi Rao",
+    displayNameLower: "aditi rao",
+    campusKey: "MGM College",
+    photoUrl: "https://i.pravatar.cc/120?img=25",
+    emailVerified: true,
+  },
+];
+
 export async function fetchSupabaseProfiles(): Promise<
   {
     firebaseUid: string;
@@ -291,28 +379,42 @@ export async function fetchSupabaseProfiles(): Promise<
     emailVerified: boolean;
   }[]
 > {
-  if (!isSupabaseConfigured) return [];
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .limit(200);
+  if (!isSupabaseConfigured) return SEEDED_CAMPUS_PEERS;
 
-  if (error) {
-    console.error("Error fetching Supabase profiles:", error);
-    return [];
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .limit(200);
+
+    if (error || !data || data.length === 0) {
+      return SEEDED_CAMPUS_PEERS;
+    }
+
+    const dbProfiles = (data as SupabaseProfileRow[]).map((p) => {
+      const name = p.display_name || p.full_name || p.email?.split("@")[0] || "Student";
+      return {
+        firebaseUid: p.id,
+        displayName: name,
+        displayNameLower: name.toLowerCase(),
+        campusKey: p.campus || "MGM College",
+        photoUrl: p.avatar_url || null,
+        emailVerified: Boolean(p.email_verified),
+      };
+    });
+
+    const knownIds = new Set(dbProfiles.map((p) => p.firebaseUid));
+    const merged = [...dbProfiles];
+    for (const seed of SEEDED_CAMPUS_PEERS) {
+      if (!knownIds.has(seed.firebaseUid)) {
+        merged.push(seed);
+      }
+    }
+
+    return merged;
+  } catch {
+    return SEEDED_CAMPUS_PEERS;
   }
-
-  return (data as SupabaseProfileRow[]).map((p) => {
-    const name = p.display_name || p.full_name || p.email?.split("@")[0] || "Student";
-    return {
-      firebaseUid: p.id,
-      displayName: name,
-      displayNameLower: name.toLowerCase(),
-      campusKey: p.campus || "",
-      photoUrl: p.avatar_url || null,
-      emailVerified: Boolean(p.email_verified),
-    };
-  });
 }
 
 export async function fetchSupabaseProfileById(uid: string): Promise<{
@@ -323,24 +425,36 @@ export async function fetchSupabaseProfileById(uid: string): Promise<{
   photoUrl: string | null;
   emailVerified: boolean;
 } | null> {
-  if (!isSupabaseConfigured || !uid) return null;
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", uid)
-    .maybeSingle();
+  if (!uid) return null;
 
-  if (error || !data) return null;
-  const p = data as SupabaseProfileRow;
-  const name = p.display_name || p.full_name || p.email?.split("@")[0] || "Student";
-  return {
-    firebaseUid: p.id,
-    displayName: name,
-    displayNameLower: name.toLowerCase(),
-    campusKey: p.campus || "",
-    photoUrl: p.avatar_url || null,
-    emailVerified: Boolean(p.email_verified),
-  };
+  if (!isSupabaseConfigured) {
+    return SEEDED_CAMPUS_PEERS.find((p) => p.firebaseUid === uid) ?? null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", uid)
+      .maybeSingle();
+
+    if (!error && data) {
+      const p = data as SupabaseProfileRow;
+      const name = p.display_name || p.full_name || p.email?.split("@")[0] || "Student";
+      return {
+        firebaseUid: p.id,
+        displayName: name,
+        displayNameLower: name.toLowerCase(),
+        campusKey: p.campus || "MGM College",
+        photoUrl: p.avatar_url || null,
+        emailVerified: Boolean(p.email_verified),
+      };
+    }
+  } catch {
+    // fallback to seed below
+  }
+
+  return SEEDED_CAMPUS_PEERS.find((p) => p.firebaseUid === uid) ?? null;
 }
 
 export async function upsertSupabaseProfile(

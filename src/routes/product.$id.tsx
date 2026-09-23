@@ -90,7 +90,9 @@ function ProductDetails() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const [currentAvailability, setCurrentAvailability] = useState(product.availability || "Available");
   const [soldCelebrationOpen, setSoldCelebrationOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const gallery = product.images?.length
     ? product.images
@@ -125,24 +127,48 @@ function ProductDetails() {
     });
   };
 
-  const handleMarkAsSold = async () => {
+  const handleToggleSoldStatus = async () => {
     setIsUpdatingStatus(true);
+    const newStatus = currentAvailability === "Sold" ? "Available" : "Sold";
     try {
       if (isSupabaseConfigured && product.id) {
         await supabase
           .from("listings")
-          .update({ availability: "Sold" })
+          .update({ availability: newStatus })
           .eq("id", product.id);
       }
-      setCurrentAvailability("Sold");
-      setSoldCelebrationOpen(true);
-      toast.success("Listing marked as Sold! +25 Campus Points added.");
+      setCurrentAvailability(newStatus);
+      if (newStatus === "Sold") {
+        setSoldCelebrationOpen(true);
+        toast.success("Listing marked as Sold! +25 Campus Points awarded.");
+      } else {
+        toast.info("Listing status updated back to Available.");
+      }
     } catch (err) {
       console.error(err);
-      setCurrentAvailability("Sold");
-      setSoldCelebrationOpen(true);
+      setCurrentAvailability(newStatus);
+      if (newStatus === "Sold") {
+        setSoldCelebrationOpen(true);
+      }
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleDeleteListing = async () => {
+    setIsDeleting(true);
+    try {
+      if (isSupabaseConfigured && product.id) {
+        await supabase.from("listings").delete().eq("id", product.id);
+      }
+      toast.success("Listing deleted successfully.");
+      setDeleteConfirmOpen(false);
+      navigate({ to: "/marketplace" });
+    } catch (err) {
+      console.error(err);
+      toast.error("Could not delete listing. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -562,14 +588,29 @@ function ProductDetails() {
               </div>
 
               {isOwner && (
-                <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-50/5 p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-semibold">Listing management</div>
+                <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 shadow-soft">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-semibold flex items-center gap-2">
+                      <span>Listing management</span>
+                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                        Owner Controls
+                      </span>
+                    </div>
                     <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
                       +25 pts on Sold
                     </span>
                   </div>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-2.5 sm:grid-cols-2">
+                    <Link to="/dashboard">
+                      <Button
+                        variant="outline"
+                        className="w-full rounded-full"
+                        size="sm"
+                      >
+                        <Edit3 className="mr-2 h-4 w-4" />
+                        Edit details
+                      </Button>
+                    </Link>
                     <Button
                       variant="outline"
                       className="rounded-full"
@@ -583,11 +624,21 @@ function ProductDetails() {
                       variant={currentAvailability === "Sold" ? "secondary" : "default"}
                       className="rounded-full"
                       size="sm"
-                      onClick={handleMarkAsSold}
-                      disabled={isUpdatingStatus || currentAvailability === "Sold"}
+                      onClick={handleToggleSoldStatus}
+                      disabled={isUpdatingStatus}
                     >
                       <CheckCircle2 className="mr-2 h-4 w-4" />
-                      {currentAvailability === "Sold" ? "Marked as Sold" : "Mark as sold"}
+                      {currentAvailability === "Sold" ? "Mark as Available" : "Mark as sold"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="rounded-full"
+                      size="sm"
+                      onClick={() => setDeleteConfirmOpen(true)}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete listing
                     </Button>
                   </div>
                 </div>
@@ -1004,6 +1055,42 @@ function ProductDetails() {
                   onClick={() => setSoldCelebrationOpen(false)}
                 >
                   Back to Listing
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* 4. Delete Listing Confirmation Dialog */}
+          <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-destructive/10 text-destructive">
+                  <Trash2 className="h-6 w-6" />
+                </div>
+                <DialogTitle className="text-center font-display text-xl font-semibold">
+                  Delete this listing?
+                </DialogTitle>
+                <DialogDescription className="text-center text-sm text-muted-foreground">
+                  Are you sure you want to permanently delete "{product.title}"? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter className="mt-4 gap-2 sm:justify-between">
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  disabled={isDeleting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="rounded-full"
+                  onClick={handleDeleteListing}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? "Deleting..." : "Yes, Delete Listing"}
                 </Button>
               </DialogFooter>
             </DialogContent>

@@ -46,6 +46,7 @@ export const products: Product[] = [
     originalPrice: 720,
     category: "Books",
     condition: "Good",
+    sellerId: "user_rhea",
     image:
       "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -74,6 +75,7 @@ export const products: Product[] = [
     originalPrice: 89900,
     category: "Electronics",
     condition: "Like New",
+    sellerId: "user_yash",
     image:
       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -103,6 +105,7 @@ export const products: Product[] = [
     originalPrice: 1100,
     category: "Gadgets",
     condition: "Like New",
+    sellerId: "user_mihir",
     image:
       "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -132,11 +135,12 @@ export const products: Product[] = [
     originalPrice: 9500,
     category: "Cycles",
     condition: "Good",
+    sellerId: "user_devansh",
     image:
       "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Devansh Kapoor",
-      college: "SIRT Bhopal",
+      college: "MGM College",
       verified: true,
       rating: 4.6,
       avatar: "https://i.pravatar.cc/120?img=14",
@@ -162,11 +166,12 @@ export const products: Product[] = [
     price: 380,
     category: "Hostel Essentials",
     condition: "New",
+    sellerId: "user_sana",
     image:
       "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Sana Thomas",
-      college: "Technocrats Institute",
+      college: "MGM CET",
       verified: true,
       rating: 4.7,
       avatar: "https://i.pravatar.cc/120?img=20",
@@ -189,14 +194,15 @@ export const products: Product[] = [
     price: 120,
     category: "Notes",
     condition: "Like New",
+    sellerId: "user_ananya",
     image:
       "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=70",
     seller: {
-      name: "Ananya Singh",
-      college: "Bhopal School of Engineering",
+      name: "Ananya Sharma",
+      college: "MGM University",
       verified: true,
       rating: 4.9,
-      avatar: "https://i.pravatar.cc/120?img=45",
+      avatar: "https://i.pravatar.cc/120?img=32",
     },
     description:
       "Complete semester notes with diagrams, complexity tables, and concise revision pages.",
@@ -218,11 +224,12 @@ export const products: Product[] = [
     originalPrice: 4499,
     category: "Gadgets",
     condition: "Like New",
+    sellerId: "user_ishaan",
     image:
       "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Ishaan Verma",
-      college: "Oriental Institute Bhopal",
+      college: "MGM College",
       verified: true,
       rating: 4.8,
       avatar: "https://i.pravatar.cc/120?img=15",
@@ -236,7 +243,7 @@ export const products: Product[] = [
     department: "IT",
     specs: ["Battery: 50h", "Bluetooth: 5.x", "Mic: built-in"],
     tags: ["Audio", "Wireless", "Sony"],
-    availability: "Reserved",
+    availability: "Available",
     postedAgo: "2 days ago",
   },
   {
@@ -245,11 +252,12 @@ export const products: Product[] = [
     price: 950,
     category: "Furniture",
     condition: "Good",
+    sellerId: "user_tanvi",
     image:
       "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Tanvi Patel",
-      college: "BUIT Bhopal",
+      college: "MGM CET",
       verified: true,
       rating: 4.6,
       avatar: "https://i.pravatar.cc/120?img=22",
@@ -273,11 +281,12 @@ export const products: Product[] = [
     price: 720,
     category: "Lab Equipment",
     condition: "Like New",
+    sellerId: "user_rohan",
     image:
       "https://images.unsplash.com/photo-1581090700227-1e37b190418e?auto=format&fit=crop&w=900&q=70",
     seller: {
       name: "Rohan Das",
-      college: "JEC Jabalpur",
+      college: "MGM College",
       verified: true,
       rating: 4.9,
       avatar: "https://i.pravatar.cc/120?img=8",
@@ -301,6 +310,7 @@ export const products: Product[] = [
     originalPrice: 33900,
     category: "Electronics",
     condition: "Good",
+    sellerId: "user_sneha",
     image:
       "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -332,6 +342,7 @@ export const products: Product[] = [
     originalPrice: 1300,
     category: "Books",
     condition: "Good",
+    sellerId: "user_aditya",
     image:
       "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -361,6 +372,7 @@ export const products: Product[] = [
     originalPrice: 6800,
     category: "Hostel Essentials",
     condition: "Good",
+    sellerId: "user_kabir",
     image:
       "https://images.unsplash.com/photo-1536353284924-9220c464e262?auto=format&fit=crop&w=900&q=70",
     seller: {

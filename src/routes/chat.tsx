@@ -40,6 +40,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { buildFallbackUserProfile, useCurrentUserProfile } from "@/lib/user-profile";
 import { useRequireAuth } from "@/lib/route-auth";
 import {
+  fetchSupabaseThreadMessages,
+  sendSupabaseDirectMessage,
+  subscribeToSupabaseThread,
+  fetchUserChatThreads,
+} from "@/lib/supabase-chat";
+import {
   getChatSocket,
   useSocketStatus,
   type ChatAttachment,
@@ -57,6 +63,8 @@ export const Route = createFileRoute("/chat")({
 });
 
 const EMOJIS = ["👍", "❤️", "😂", "🔥", "👏", "😮", "😅", "🙏", "🎉", "✅", "💯", "✨"];
+const AI_AVATAR = "https://api.dicebear.com/7.x/bottts/svg?seed=smartcampus-ai";
+const AI_NAME = "Campus Assistant";
 
 function ChatPage() {
   const navigate = useNavigate();
@@ -265,27 +273,52 @@ function ChatPage() {
     setShowThread(true);
   }, [threads, search.peerUid, user?.uid]);
 
-  const AI_AVATAR = "https://avatars.dicebear.com/api/identicon/ai-assistant.svg";
-  const AI_NAME = "AI Assistant";
+  useEffect(() => {
+    if (!user?.uid) return;
+    void fetchUserChatThreads(user.uid).then((loadedThreads) => {
+      setThreads((current) => {
+        const map = new Map<string, ChatThread>();
+        loadedThreads.forEach((t) => map.set(t.id, t));
+        current.forEach((t) => {
+          if (!map.has(t.id)) map.set(t.id, t);
+        });
+        return Array.from(map.values());
+      });
+    });
+  }, [user?.uid]);
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !user?.uid) return;
 
     revokeMessagePreviews(messagesRef.current);
-    setMessages([]);
     if (activeId === AI_ASSISTANT_THREAD.id) {
+      setMessages([]);
       setText("");
       setEditingId(null);
       setReplyTo(null);
       setTyping(false);
-      setPending((current) => {
-        current.forEach(
-          (attachment) => attachment.previewUrl && URL.revokeObjectURL(attachment.previewUrl),
-        );
-        return [];
-      });
+      setPending([]);
       return;
     }
+
+    let isMounted = true;
+    void fetchSupabaseThreadMessages(activeId, user.uid).then((fetched) => {
+      if (isMounted) {
+        setMessages(fetched);
+      }
+    });
+
+    const unsubscribe = subscribeToSupabaseThread(activeId, user.uid, (newMsg) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
+      setThreads((prevThreads) =>
+        prevThreads.map((t) =>
+          t.id === activeId ? { ...t, lastMsg: newMsg.text, time: newMsg.time } : t,
+        ),
+      );
+    });
 
     socket.emit("chat:thread:join", {
       threadId: activeId,
@@ -301,7 +334,12 @@ function ChatPage() {
       );
       return [];
     });
-  }, [activeId, authLoading, currentUser, socket]);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [activeId, authLoading, currentUser, socket, user?.uid]);
 
   useEffect(() => {
     return () => {
@@ -365,7 +403,7 @@ function ChatPage() {
   const deleteMessage = (id: string) =>
     socket.emit("chat:message:delete", { threadId: activeId, messageId: id, user: currentUser });
 
-  const send = () => {
+  const send = async () => {
     if (activeId === AI_ASSISTANT_THREAD.id) {
       navigate({ to: "/ai-chat" });
       return;
@@ -381,6 +419,9 @@ function ChatPage() {
         text: trimmed,
         user: currentUser,
       });
+      setMessages((prev) =>
+        prev.map((m) => (m.id === editingId ? { ...m, text: trimmed, edited: true } : m)),
+      );
       setEditingId(null);
       setText("");
       return;
@@ -394,56 +435,42 @@ function ChatPage() {
       previewUrl: a.previewUrl,
     }));
 
-    socket.emit("chat:message:send", {
-      threadId: activeId,
-      user: currentUser,
-      text: trimmed,
-      replyTo: replyTo ?? undefined,
-      attachments: attachments.length ? attachments : undefined,
-    });
-
-    // Fire-and-forget: ask AI for a suggested reply and emit it as a separate 'AI' user
-    (async () => {
-      try {
-        const token = user ? await user.getIdToken() : "";
-        const resp = await fetch("/api/ai/chat", {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({
-            messages: [
-              {
-                role: "system",
-                content: "You are a concise assistant for a campus marketplace chat.",
-              },
-              { role: "user", content: trimmed },
-            ],
-          }),
-        });
-
-        const payload = (await resp.json().catch(() => ({}))) as { ok?: boolean; content?: string };
-        if (resp.ok && payload?.ok && payload.content) {
-          socket.emit("chat:message:send", {
-            threadId: activeId,
-            user: { id: "ai", name: AI_NAME, avatar: AI_AVATAR },
-            text: payload.content,
-          });
-        }
-      } catch {
-        // ignore AI failures — UI remains functional
-      }
-    })();
-
-    setReplyTo(null);
+    const currentText = trimmed;
     setText("");
-    setPending((p) => p.filter(() => false));
-    setTyping(true);
-    if (typingTimerRef.current) {
-      window.clearTimeout(typingTimerRef.current);
+    setReplyTo(null);
+    setPending([]);
+
+    try {
+      const createdMsg = await sendSupabaseDirectMessage({
+        threadId: activeId,
+        senderId: user?.uid || currentUser.id,
+        senderName: currentUser.name,
+        senderAvatar: currentUser.avatar,
+        text: currentText,
+      });
+
+      if (createdMsg) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === createdMsg.id)) return prev;
+          return [...prev, createdMsg];
+        });
+        setThreads((prev) =>
+          prev.map((t) =>
+            t.id === activeId ? { ...t, lastMsg: currentText, time: createdMsg.time } : t,
+          ),
+        );
+      }
+
+      socket.emit("chat:message:send", {
+        threadId: activeId,
+        user: currentUser,
+        text: currentText,
+        replyTo: replyTo ?? undefined,
+        attachments: attachments.length ? attachments : undefined,
+      });
+    } catch (err) {
+      console.error("Failed to send message to Supabase:", err);
     }
-    typingTimerRef.current = window.setTimeout(() => setTyping(false), 1400);
   };
 
   return (
