@@ -332,7 +332,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Rhea Kulkarni",
     displayNameLower: "rhea kulkarni",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=12",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=RheaKulkarni",
     emailVerified: true,
   },
   {
@@ -340,7 +340,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Yash Tiwari",
     displayNameLower: "yash tiwari",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=47",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=YashTiwari",
     emailVerified: true,
   },
   {
@@ -348,7 +348,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Mihir Jain",
     displayNameLower: "mihir jain",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=33",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=MihirJain",
     emailVerified: true,
   },
   {
@@ -356,7 +356,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Devansh Kapoor",
     displayNameLower: "devansh kapoor",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=14",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=DevanshKapoor",
     emailVerified: true,
   },
   {
@@ -364,7 +364,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Sana Thomas",
     displayNameLower: "sana thomas",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=20",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=SanaThomas",
     emailVerified: true,
   },
   {
@@ -372,7 +372,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Ananya Sharma",
     displayNameLower: "ananya sharma",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=32",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnanyaSharma",
     emailVerified: true,
   },
   {
@@ -380,7 +380,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Ishaan Verma",
     displayNameLower: "ishaan verma",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=15",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=IshaanVerma",
     emailVerified: true,
   },
   {
@@ -388,7 +388,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Tanvi Patel",
     displayNameLower: "tanvi patel",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=22",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=TanviPatel",
     emailVerified: true,
   },
   {
@@ -396,7 +396,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Rohan Das",
     displayNameLower: "rohan das",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=8",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=RohanDas",
     emailVerified: true,
   },
   {
@@ -404,7 +404,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Sneha Rao",
     displayNameLower: "sneha rao",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=49",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=SnehaRao",
     emailVerified: true,
   },
   {
@@ -412,7 +412,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Aditya Joshi",
     displayNameLower: "aditya joshi",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=11",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=AdityaJoshi",
     emailVerified: true,
   },
   {
@@ -420,7 +420,7 @@ export const SEEDED_CAMPUS_PEERS = [
     displayName: "Kabir Shah",
     displayNameLower: "kabir shah",
     campusKey: "MGM College",
-    photoUrl: "https://i.pravatar.cc/120?img=7",
+    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=KabirShah",
     emailVerified: true,
   },
 ];

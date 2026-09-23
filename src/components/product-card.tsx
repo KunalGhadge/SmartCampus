@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, BadgeCheck, MapPin, Clock, Tag } from "lucide-react";
+import { Heart, BadgeCheck, MapPin, Clock, Tag, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Product } from "@/lib/mock-data";
+import { type Product, isDemoListing } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { useWishlist } from "@/lib/wishlist";
 import { ListingRiskBadge } from "@/components/listing-safety-banner";
@@ -9,6 +9,7 @@ import { ListingRiskBadge } from "@/components/listing-safety-banner";
 export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
   const wishlist = useWishlist();
   const liked = wishlist.has(product.id);
+  const isDemo = isDemoListing(product);
   const discount = product.originalPrice
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
@@ -46,6 +47,11 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           {discount && (
             <span className="absolute left-3 top-3 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-semibold text-background">
               {discount}% OFF
+            </span>
+          )}
+          {isDemo && !product.forRent && (
+            <span className="absolute bottom-3 left-3 rounded-full bg-background/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center gap-1 shadow-soft">
+              <Sparkles className="h-3 w-3" /> Demo Listing
             </span>
           )}
           {product.forRent && (

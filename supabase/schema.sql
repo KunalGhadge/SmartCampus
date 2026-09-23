@@ -346,18 +346,18 @@ create policy "Authenticated users can upload avatars"
 -- ------------------------------------------------------------------------------
 insert into public.profiles (id, email, full_name, display_name, avatar_url, campus, college, department, verified, email_verified, trust_score)
 values
-  ('a1111111-0000-4000-a000-000000000001', 'rhea.k@mgmcollege.edu', 'Rhea Kulkarni', 'Rhea Kulkarni', 'https://i.pravatar.cc/120?img=12', 'MGM College', 'MGM College', 'Mechanical Engineering', true, true, 98),
-  ('a1111111-0000-4000-a000-000000000002', 'yash.t@mgmcollege.edu', 'Yash Tiwari', 'Yash Tiwari', 'https://i.pravatar.cc/120?img=47', 'MGM College', 'MGM CET', 'CSE', true, true, 97),
-  ('a1111111-0000-4000-a000-000000000003', 'mihir.j@mgmcollege.edu', 'Mihir Jain', 'Mihir Jain', 'https://i.pravatar.cc/120?img=33', 'MGM College', 'MGM University', 'EEE', true, true, 99),
-  ('a1111111-0000-4000-a000-000000000004', 'devansh.k@mgmcollege.edu', 'Devansh Kapoor', 'Devansh Kapoor', 'https://i.pravatar.cc/120?img=14', 'MGM College', 'MGM College', 'Civil Engineering', true, true, 94),
-  ('a1111111-0000-4000-a000-000000000005', 'sana.t@mgmcollege.edu', 'Sana Thomas', 'Sana Thomas', 'https://i.pravatar.cc/120?img=20', 'MGM College', 'MGM CET', 'ECE', true, true, 96),
-  ('a1111111-0000-4000-a000-000000000006', 'ananya.s@mgmcollege.edu', 'Ananya Sharma', 'Ananya Sharma', 'https://i.pravatar.cc/120?img=32', 'MGM College', 'MGM University', 'Computer Science', true, true, 98),
-  ('a1111111-0000-4000-a000-000000000007', 'ishaan.v@mgmcollege.edu', 'Ishaan Verma', 'Ishaan Verma', 'https://i.pravatar.cc/120?img=15', 'MGM College', 'MGM College', 'IT', true, true, 96),
-  ('a1111111-0000-4000-a000-000000000008', 'tanvi.p@mgmcollege.edu', 'Tanvi Patel', 'Tanvi Patel', 'https://i.pravatar.cc/120?img=22', 'MGM College', 'MGM CET', 'Architecture', true, true, 95),
-  ('a1111111-0000-4000-a000-000000000009', 'rohan.d@mgmcollege.edu', 'Rohan Das', 'Rohan Das', 'https://i.pravatar.cc/120?img=8', 'MGM College', 'MGM College', 'Electrical Engineering', true, true, 97),
-  ('a1111111-0000-4000-a000-000000000010', 'sneha.r@mgmcollege.edu', 'Sneha Rao', 'Sneha Rao', 'https://i.pravatar.cc/120?img=49', 'MGM College', 'MGM College', 'Chemical Engineering', true, true, 96),
-  ('a1111111-0000-4000-a000-000000000011', 'aditya.j@mgmcollege.edu', 'Aditya Joshi', 'Aditya Joshi', 'https://i.pravatar.cc/120?img=11', 'MGM College', 'MGM University', 'Engineering Physics', true, true, 97),
-  ('a1111111-0000-4000-a000-000000000012', 'kabir.s@mgmcollege.edu', 'Kabir Shah', 'Kabir Shah', 'https://i.pravatar.cc/120?img=7', 'MGM College', 'MGM CET', 'MBA', true, true, 95)
+  ('a1111111-0000-4000-a000-000000000001', 'rhea.k@mgmcollege.edu', 'Rhea Kulkarni', 'Rhea Kulkarni', 'https://api.dicebear.com/7.x/avataaars/svg?seed=RheaKulkarni', 'MGM College', 'MGM College', 'Mechanical Engineering', true, true, 98),
+  ('a1111111-0000-4000-a000-000000000002', 'yash.t@mgmcollege.edu', 'Yash Tiwari', 'Yash Tiwari', 'https://api.dicebear.com/7.x/avataaars/svg?seed=YashTiwari', 'MGM College', 'MGM CET', 'CSE', true, true, 97),
+  ('a1111111-0000-4000-a000-000000000003', 'mihir.j@mgmcollege.edu', 'Mihir Jain', 'Mihir Jain', 'https://api.dicebear.com/7.x/avataaars/svg?seed=MihirJain', 'MGM College', 'MGM University', 'EEE', true, true, 99),
+  ('a1111111-0000-4000-a000-000000000004', 'devansh.k@mgmcollege.edu', 'Devansh Kapoor', 'Devansh Kapoor', 'https://api.dicebear.com/7.x/avataaars/svg?seed=DevanshKapoor', 'MGM College', 'MGM College', 'Civil Engineering', true, true, 94),
+  ('a1111111-0000-4000-a000-000000000005', 'sana.t@mgmcollege.edu', 'Sana Thomas', 'Sana Thomas', 'https://api.dicebear.com/7.x/avataaars/svg?seed=SanaThomas', 'MGM College', 'MGM CET', 'ECE', true, true, 96),
+  ('a1111111-0000-4000-a000-000000000006', 'ananya.s@mgmcollege.edu', 'Ananya Sharma', 'Ananya Sharma', 'https://api.dicebear.com/7.x/avataaars/svg?seed=AnanyaSharma', 'MGM College', 'MGM University', 'Computer Science', true, true, 98),
+  ('a1111111-0000-4000-a000-000000000007', 'ishaan.v@mgmcollege.edu', 'Ishaan Verma', 'Ishaan Verma', 'https://api.dicebear.com/7.x/avataaars/svg?seed=IshaanVerma', 'MGM College', 'MGM College', 'IT', true, true, 96),
+  ('a1111111-0000-4000-a000-000000000008', 'tanvi.p@mgmcollege.edu', 'Tanvi Patel', 'Tanvi Patel', 'https://api.dicebear.com/7.x/avataaars/svg?seed=TanviPatel', 'MGM College', 'MGM CET', 'Architecture', true, true, 95),
+  ('a1111111-0000-4000-a000-000000000009', 'rohan.d@mgmcollege.edu', 'Rohan Das', 'Rohan Das', 'https://api.dicebear.com/7.x/avataaars/svg?seed=RohanDas', 'MGM College', 'MGM College', 'Electrical Engineering', true, true, 97),
+  ('a1111111-0000-4000-a000-000000000010', 'sneha.r@mgmcollege.edu', 'Sneha Rao', 'Sneha Rao', 'https://api.dicebear.com/7.x/avataaars/svg?seed=SnehaRao', 'MGM College', 'MGM College', 'Chemical Engineering', true, true, 96),
+  ('a1111111-0000-4000-a000-000000000011', 'aditya.j@mgmcollege.edu', 'Aditya Joshi', 'Aditya Joshi', 'https://api.dicebear.com/7.x/avataaars/svg?seed=AdityaJoshi', 'MGM College', 'MGM University', 'Engineering Physics', true, true, 97),
+  ('a1111111-0000-4000-a000-000000000012', 'kabir.s@mgmcollege.edu', 'Kabir Shah', 'Kabir Shah', 'https://api.dicebear.com/7.x/avataaars/svg?seed=KabirShah', 'MGM College', 'MGM CET', 'MBA', true, true, 95)
 on conflict (id) do update
 set
   display_name = excluded.display_name,

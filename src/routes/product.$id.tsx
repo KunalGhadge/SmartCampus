@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { useCatalog } from "@/lib/catalog";
 import { useWishlist } from "@/lib/wishlist";
 import { useAuth } from "@/lib/auth";
+import { isDemoListing } from "@/lib/mock-data";
 import {
   Dialog,
   DialogContent,
@@ -67,6 +68,7 @@ function ProductDetails() {
   if (!product) throw notFound();
   
   const isOwner = user?.uid && product.sellerId === user.uid;
+  const isDemo = isDemoListing(product);
   
   const [active, setActive] = useState(0);
   const wishlist = useWishlist();
@@ -116,13 +118,15 @@ function ProductDetails() {
     navigate({
       to: "/chat",
       search: {
-        peerUid: product.sellerId || undefined,
+        peerUid: product.sellerId || (isDemo ? `demo_${product.id}` : undefined),
         peerName: product.seller.name,
         peerAvatar: product.seller.avatar,
+        product: product.title,
+        initialMsg: prefillMessage,
       },
     });
     
-    toast.success("Connecting with seller...", {
+    toast.success(`Opening chat with ${product.seller.name}`, {
       description: `Proposed safe meet-up spot: ${selectedMeetup}`,
     });
   };
@@ -530,7 +534,7 @@ function ProductDetails() {
                 <div className="flex items-center gap-3">
                   <img src={product.seller.avatar} alt="" className="h-12 w-12 rounded-full" />
                   <div className="flex-1">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {product.sellerId ? (
                         <Link
                           to="/profile/$userId"
@@ -545,19 +549,25 @@ function ProductDetails() {
                       {product.seller.verified && (
                         <BadgeCheck className="h-4 w-4 text-foreground" />
                       )}
+                      {isDemo && (
+                        <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                          <Sparkles className="h-2.5 w-2.5" /> Demo Seller
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3" /> {product.seller.college} · ★{" "}
                       {product.seller.rating}
                     </div>
                   </div>
-                  {!isOwner && product.sellerId ? (
+                  {!isOwner && (product.sellerId || isDemo) ? (
                     <Link
                       to="/chat"
                       search={{
-                        peerUid: product.sellerId,
+                        peerUid: product.sellerId || (isDemo ? `demo_${product.id}` : undefined),
                         peerName: product.seller.name,
                         peerAvatar: product.seller.avatar,
+                        product: product.title,
                       }}
                     >
                       <Button size="sm" className="rounded-full">

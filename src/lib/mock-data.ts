@@ -33,7 +33,22 @@ export type Product = {
   postedAgo: string;
   /** Present on Firestore-backed listings — opens peer profile & DM */
   sellerId?: string;
+  isDemo?: boolean;
 };
+
+export function isDemoListing(product: Product): boolean {
+  if (product.isDemo) return true;
+  if (!product.sellerId) return true;
+  if (
+    product.sellerId.startsWith("a1111111-") ||
+    product.sellerId.startsWith("user_") ||
+    product.id.startsWith("p") ||
+    product.id.startsWith("mock")
+  ) {
+    return true;
+  }
+  return false;
+}
 
 const img = (q: string, seed: number) =>
   `https://images.unsplash.com/photo-${q}?auto=format&fit=crop&w=900&q=70&sig=${seed}`;
@@ -47,6 +62,7 @@ export const products: Product[] = [
     category: "Books",
     condition: "Good",
     sellerId: "a1111111-0000-4000-a000-000000000001",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -54,7 +70,7 @@ export const products: Product[] = [
       college: "MGM College",
       verified: true,
       rating: 4.9,
-      avatar: "https://i.pravatar.cc/120?img=12",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=RheaKulkarni",
     },
     description: "Clean copy with no pen marks and only a few highlighter lines in chapter 3.",
     shortDescription: "First-year staple in excellent reading condition.",
@@ -83,7 +99,7 @@ export const products: Product[] = [
       college: "MGM CET",
       verified: true,
       rating: 4.8,
-      avatar: "https://i.pravatar.cc/120?img=47",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=YashTiwari",
     },
     description:
       "Single-owner device with strong battery health, original charger, and purchase box.",
@@ -106,6 +122,7 @@ export const products: Product[] = [
     category: "Gadgets",
     condition: "Like New",
     sellerId: "a1111111-0000-4000-a000-000000000003",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -113,7 +130,7 @@ export const products: Product[] = [
       college: "MGM University",
       verified: true,
       rating: 5.0,
-      avatar: "https://i.pravatar.cc/120?img=33",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=MihirJain",
     },
     description:
       "Used for one semester and fully tested before listing. Protective cover included.",
@@ -136,6 +153,7 @@ export const products: Product[] = [
     category: "Cycles",
     condition: "Good",
     sellerId: "a1111111-0000-4000-a000-000000000004",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -143,7 +161,7 @@ export const products: Product[] = [
       college: "MGM College",
       verified: true,
       rating: 4.6,
-      avatar: "https://i.pravatar.cc/120?img=14",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=DevanshKapoor",
     },
     description:
       "Recently serviced with new brake pads and fresh tyres, ideal for daily campus rides.",
@@ -167,6 +185,7 @@ export const products: Product[] = [
     category: "Hostel Essentials",
     condition: "New",
     sellerId: "a1111111-0000-4000-a000-000000000005",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -174,7 +193,7 @@ export const products: Product[] = [
       college: "MGM CET",
       verified: true,
       rating: 4.7,
-      avatar: "https://i.pravatar.cc/120?img=20",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SanaThomas",
     },
     description: "Brand new sealed unit with three brightness levels and rechargeable battery.",
     shortDescription: "Unused LED lamp designed for night study sessions.",
@@ -195,6 +214,7 @@ export const products: Product[] = [
     category: "Notes",
     condition: "Like New",
     sellerId: "a1111111-0000-4000-a000-000000000006",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -202,7 +222,7 @@ export const products: Product[] = [
       college: "MGM University",
       verified: true,
       rating: 4.9,
-      avatar: "https://i.pravatar.cc/120?img=32",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnanyaSharma",
     },
     description:
       "Complete semester notes with diagrams, complexity tables, and concise revision pages.",
@@ -225,6 +245,7 @@ export const products: Product[] = [
     category: "Gadgets",
     condition: "Like New",
     sellerId: "a1111111-0000-4000-a000-000000000007",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -232,7 +253,7 @@ export const products: Product[] = [
       college: "MGM College",
       verified: true,
       rating: 4.8,
-      avatar: "https://i.pravatar.cc/120?img=15",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=IshaanVerma",
     },
     description: "Lightly used for four months with long battery backup and clear mic quality.",
     shortDescription: "Wireless headphones for calls, classes, and commute.",
@@ -253,6 +274,7 @@ export const products: Product[] = [
     category: "Furniture",
     condition: "Good",
     sellerId: "a1111111-0000-4000-a000-000000000008",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -260,7 +282,7 @@ export const products: Product[] = [
       college: "MGM CET",
       verified: true,
       rating: 4.6,
-      avatar: "https://i.pravatar.cc/120?img=22",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=TanviPatel",
     },
     description:
       "Sturdy foldable unit with stable legs and clean finish, suitable for compact hostel rooms.",
@@ -282,6 +304,7 @@ export const products: Product[] = [
     category: "Lab Equipment",
     condition: "Like New",
     sellerId: "a1111111-0000-4000-a000-000000000009",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1581090700227-1e37b190418e?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -289,7 +312,7 @@ export const products: Product[] = [
       college: "MGM College",
       verified: true,
       rating: 4.9,
-      avatar: "https://i.pravatar.cc/120?img=8",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=RohanDas",
     },
     description: "Calibrated unit used in one EE lab cycle; probes and battery are included.",
     shortDescription: "Reliable lab multimeter for practical sessions.",
@@ -311,6 +334,7 @@ export const products: Product[] = [
     category: "Electronics",
     condition: "Good",
     sellerId: "a1111111-0000-4000-a000-000000000010",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -318,7 +342,7 @@ export const products: Product[] = [
       college: "MGM College",
       verified: true,
       rating: 4.7,
-      avatar: "https://i.pravatar.cc/120?img=49",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SnehaRao",
     },
     description:
       "Great for digital notes and PDF markup. Includes Apple Pencil and protective case.",
@@ -343,6 +367,7 @@ export const products: Product[] = [
     category: "Books",
     condition: "Good",
     sellerId: "a1111111-0000-4000-a000-000000000011",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -350,7 +375,7 @@ export const products: Product[] = [
       college: "MGM University",
       verified: true,
       rating: 4.8,
-      avatar: "https://i.pravatar.cc/120?img=11",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AdityaJoshi",
     },
     description:
       "Complete two-volume set with strong binding and clean pages for first-year physics prep.",
@@ -373,6 +398,7 @@ export const products: Product[] = [
     category: "Hostel Essentials",
     condition: "Good",
     sellerId: "a1111111-0000-4000-a000-000000000012",
+    isDemo: true,
     image:
       "https://images.unsplash.com/photo-1536353284924-9220c464e262?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -380,7 +406,7 @@ export const products: Product[] = [
       college: "MGM CET",
       verified: true,
       rating: 4.6,
-      avatar: "https://i.pravatar.cc/120?img=7",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=KabirShah",
     },
     description:
       "Low-noise 50L mini fridge with efficient cooling for drinks, fruit, and essentials.",
@@ -414,21 +440,21 @@ export const testimonials = [
     college: "MGM College",
     quote:
       "I uploaded three first-year books during lunch and they were sold before evening. Verified MGM student profiles made the whole process feel safe.",
-    avatar: "https://i.pravatar.cc/120?img=5",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PranavSharma",
   },
   {
     name: "Nikita J.",
     college: "MGM CET (Engineering)",
     quote:
       "I found a semester cycle rental in 15 minutes and coordinated pickup near the central library. No random bargaining, no confusion.",
-    avatar: "https://i.pravatar.cc/120?img=32",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NikitaJoshi",
   },
   {
     name: "Aman G.",
     college: "MGM University",
     quote:
       "The AI assistant helped me price my calculator and draft buyer replies. My listing moved in under a day on campus.",
-    avatar: "https://i.pravatar.cc/120?img=17",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AmanGupta",
   },
 ];
 
@@ -440,7 +466,7 @@ export const conversations = [
     time: "now",
     online: true,
     unread: 0,
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=bot",
+    avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=smartcampus-ai",
     product: "AI Assistant",
     isBot: true,
   },
@@ -451,7 +477,7 @@ export const conversations = [
     time: "2m",
     online: true,
     unread: 1,
-    avatar: "https://i.pravatar.cc/120?img=12",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=RheaKulkarni",
     product: "B.S. Grewal Maths",
   },
   {
@@ -461,7 +487,7 @@ export const conversations = [
     time: "18m",
     online: true,
     unread: 0,
-    avatar: "https://i.pravatar.cc/120?img=47",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=YashTiwari",
     product: "MacBook Air M1",
   },
   {
@@ -471,7 +497,7 @@ export const conversations = [
     time: "3h",
     online: false,
     unread: 0,
-    avatar: "https://i.pravatar.cc/120?img=33",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=MihirJain",
     product: "Casio FX-991ES",
   },
   {
@@ -481,7 +507,7 @@ export const conversations = [
     time: "1d",
     online: false,
     unread: 0,
-    avatar: "https://i.pravatar.cc/120?img=20",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SanaThomas",
     product: "Study Lamp",
   },
 ];
@@ -523,7 +549,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM CET (Engineering)",
     department: "Mechanical",
     postedAgo: "14 min ago",
-    student: { name: "Rahul Verma", avatar: "https://i.pravatar.cc/120?img=52", verified: true },
+    student: { name: "Rahul Verma", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=RahulVerma", verified: true },
   },
   {
     id: "r2",
@@ -538,7 +564,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM College",
     department: "CSE",
     postedAgo: "42 min ago",
-    student: { name: "Priya Nair", avatar: "https://i.pravatar.cc/120?img=44", verified: true },
+    student: { name: "Priya Nair", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaNair", verified: true },
   },
   {
     id: "r3",
@@ -553,7 +579,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM University",
     department: "CSE",
     postedAgo: "2 hours ago",
-    student: { name: "Arjun Khanna", avatar: "https://i.pravatar.cc/120?img=18", verified: true },
+    student: { name: "Arjun Khanna", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ArjunKhanna", verified: true },
   },
   {
     id: "r4",
@@ -568,7 +594,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM IT & CS Dept",
     department: "IT",
     postedAgo: "31 min ago",
-    student: { name: "Kavya Joshi", avatar: "https://i.pravatar.cc/120?img=41", verified: false },
+    student: { name: "Kavya Joshi", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=KavyaJoshi", verified: false },
   },
   {
     id: "r5",
@@ -583,7 +609,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM CET (Engineering)",
     department: "ECE",
     postedAgo: "26 min ago",
-    student: { name: "Siddharth Rao", avatar: "https://i.pravatar.cc/120?img=60", verified: true },
+    student: { name: "Siddharth Rao", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SiddharthRao", verified: true },
   },
   {
     id: "r6",
@@ -598,6 +624,6 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM Campus",
     department: "Management",
     postedAgo: "4 hours ago",
-    student: { name: "Nisha Agarwal", avatar: "https://i.pravatar.cc/120?img=25", verified: true },
+    student: { name: "Nisha Agarwal", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=NishaAgarwal", verified: true },
   },
 ];

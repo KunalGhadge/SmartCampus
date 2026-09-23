@@ -46,9 +46,19 @@ function PublicProfilePage() {
       ? {
           peerUid: profile.firebaseUid,
           peerName: profile.displayName,
-          peerAvatar: profile.photoUrl ?? "",
+          peerAvatar:
+            profile.photoUrl && !profile.photoUrl.includes("pravatar.cc")
+              ? profile.photoUrl
+              : `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.displayName || profile.firebaseUid)}`,
         }
       : undefined;
+
+  const avatarUrl =
+    profile?.photoUrl && !profile.photoUrl.includes("pravatar.cc")
+      ? profile.photoUrl
+      : profile
+        ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.displayName || profile.firebaseUid)}`
+        : "";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -78,18 +88,20 @@ function PublicProfilePage() {
             </div>
           ) : (
             <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-elegant">
-              <div className="h-24 bg-brand-gradient opacity-90" />
-              <div className="px-8 pb-8 pt-0">
-                <div className="-mt-14 flex flex-col items-center text-center">
-                  <img
-                    src={
-                      profile.photoUrl ??
-                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(profile.firebaseUid)}`
-                    }
-                    alt=""
-                    className="h-28 w-28 rounded-3xl border-4 border-card object-cover shadow-soft"
-                  />
-                  <h1 className="mt-4 flex items-center gap-2 text-2xl font-semibold">
+              {/* Cover Banner with smooth gradient */}
+              <div className="relative h-32 sm:h-36 bg-brand-gradient overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/15 to-transparent" />
+              </div>
+              <div className="px-6 pb-8 pt-0 sm:px-8">
+                <div className="relative -mt-16 sm:-mt-20 flex flex-col items-center text-center z-10">
+                  <div className="rounded-3xl p-1 bg-card ring-4 ring-card shadow-xl">
+                    <img
+                      src={avatarUrl}
+                      alt={profile.displayName}
+                      className="h-28 w-28 sm:h-32 sm:w-32 rounded-2xl object-cover bg-secondary"
+                    />
+                  </div>
+                  <h1 className="mt-4 flex items-center gap-2 text-2xl font-bold">
                     {profile.displayName}
                     {profile.emailVerified ? (
                       <ShieldCheck className="h-6 w-6 text-primary" aria-label="Verified email" />
@@ -97,7 +109,7 @@ function PublicProfilePage() {
                   </h1>
                   <div className="mt-2 flex flex-wrap justify-center gap-2 text-sm text-muted-foreground">
                     {profile.campusKey ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-secondary-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1 text-secondary-foreground font-medium">
                         <MapPin className="h-4 w-4" />
                         {profile.campusKey}
                       </span>
@@ -106,7 +118,7 @@ function PublicProfilePage() {
                     )}
                   </div>
 
-                  <div className="mt-8 flex w-full max-w-sm flex-col gap-2">
+                  <div className="mt-8 flex w-full max-w-sm flex-col gap-2.5">
                     {chatSearch ? (
                       <Link to="/chat" search={chatSearch}>
                         <Button className="w-full rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90">
