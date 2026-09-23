@@ -665,10 +665,12 @@ function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <Navbar />
+    <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background">
+      <div className={cn("shrink-0", showThread && "hidden md:block")}>
+        <Navbar />
+      </div>
       <main className="mx-auto w-full max-w-7xl flex-1 min-h-0 overflow-hidden px-0 py-0 sm:px-4 sm:py-4 lg:px-8">
-        <div className="grid h-full min-h-0 overflow-hidden border border-border bg-card sm:rounded-3xl md:grid-cols-[320px_1fr]">
+        <div className="grid h-full min-h-0 overflow-hidden border-0 sm:border border-border bg-card sm:rounded-3xl md:grid-cols-[320px_1fr]">
           {/* Sidebar */}
           <aside
             className={cn(
@@ -1106,7 +1108,7 @@ function ChatPage() {
                 e.preventDefault();
                 send();
               }}
-              className="border-t border-border p-3"
+              className="shrink-0 border-t border-border bg-card p-2 sm:p-3 pb-[max(0.6rem,env(safe-area-inset-bottom))]"
             >
               {replyTo || editingId ? (
                 <div className="mb-2 flex items-center justify-between rounded-2xl border border-border bg-card px-3 py-2">
@@ -1177,7 +1179,7 @@ function ChatPage() {
                 </div>
               ) : null}
 
-              <div className="flex items-end gap-2 rounded-3xl border border-border bg-card px-2 py-2 shadow-soft">
+              <div className="flex items-end gap-1.5 sm:gap-2 rounded-3xl border border-border bg-card px-2 py-1.5 sm:py-2 shadow-soft">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -1208,7 +1210,7 @@ function ChatPage() {
                       size="icon"
                       type="button"
                       aria-label="Add attachment"
-                      className="rounded-2xl"
+                      className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-2xl"
                     >
                       <Paperclip className="h-4 w-4" />
                     </Button>
@@ -1226,24 +1228,25 @@ function ChatPage() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
                 <Button
                   variant="ghost"
                   size="icon"
                   type="button"
                   onClick={() => imageInputRef.current?.click()}
                   aria-label="Upload image"
-                  className="rounded-2xl"
+                  className="hidden sm:inline-flex h-9 w-9 shrink-0 rounded-2xl"
                 >
                   <ImageIcon className="h-4 w-4" />
                 </Button>
 
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     rows={1}
-                    placeholder={`Message ${active.name}… (Enter to send, Shift+Enter for newline)`}
-                    className="max-h-28 w-full resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
+                    placeholder={`Message ${active.name}…`}
+                    className="max-h-24 sm:max-h-28 w-full resize-none bg-transparent px-1.5 sm:px-2 py-1.5 sm:py-2 text-sm outline-none placeholder:text-muted-foreground"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -1260,7 +1263,7 @@ function ChatPage() {
                       size="icon"
                       type="button"
                       aria-label="Emoji picker"
-                      className="rounded-2xl"
+                      className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-2xl"
                     >
                       <Smile className="h-4 w-4" />
                     </Button>
@@ -1288,7 +1291,7 @@ function ChatPage() {
                   size="icon"
                   type="button"
                   aria-label="Voice message"
-                  className="rounded-2xl"
+                  className="hidden sm:inline-flex h-9 w-9 shrink-0 rounded-2xl"
                 >
                   <Mic className="h-4 w-4" />
                 </Button>
@@ -1297,12 +1300,13 @@ function ChatPage() {
                   whileTap={{ scale: 0.96 }}
                   whileHover={{ y: -1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  className="shrink-0"
                 >
                   <Button
                     size="icon"
                     type="submit"
                     disabled={!text.trim() && pending.length === 0}
-                    className="rounded-2xl bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-40"
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-2xl bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-40 flex items-center justify-center"
                     aria-label="Send message"
                   >
                     <Send className="h-4 w-4" />
