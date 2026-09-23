@@ -69,6 +69,8 @@ export async function signupWithEmail(
   return mapSupabaseUserToAppUser(data.user);
 }
 
+// Google / Apple OAuth (Temporarily disabled - uncomment when OAuth credentials are ready)
+/*
 export async function loginWithGoogle(): Promise<void> {
   const origin =
     typeof window !== "undefined" && window.location.origin
@@ -84,6 +86,7 @@ export async function loginWithGoogle(): Promise<void> {
   });
   if (error) throw error;
 }
+*/
 
 export async function logoutUser(): Promise<void> {
   await supabase.auth.signOut();

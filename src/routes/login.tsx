@@ -4,7 +4,8 @@ import { Eye, EyeOff, Mail, Lock, ShoppingBag, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { loginWithEmail, loginWithGoogle, formatAuthErrorMessage } from "@/lib/auth-service";
+import { loginWithEmail, formatAuthErrorMessage } from "@/lib/auth-service";
+// import { loginWithGoogle } from "@/lib/auth-service";
 import { useRedirectAuthenticated } from "@/lib/route-auth";
 import { toast } from "sonner";
 
@@ -35,6 +36,7 @@ function LoginPage() {
     }
   };
 
+  /*
   const handleGoogleSignIn = async () => {
     setError("");
     setLoading(true);
@@ -55,6 +57,7 @@ function LoginPage() {
       description: "Please continue with Google or your MGM College email.",
     });
   };
+  */
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -78,6 +81,7 @@ function LoginPage() {
             <h1 className="font-display text-3xl font-semibold tracking-tight">Welcome back</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your MGM College SmartCampus account.</p>
 
+            {/* Google / Apple Auth temporarily commented out
             <div className="mt-7 grid gap-2">
               <SocialBtn provider="Google" onClick={handleGoogleSignIn} disabled={loading} />
               <SocialBtn provider="Apple" onClick={handleAppleSignIn} disabled={loading} />
@@ -85,8 +89,9 @@ function LoginPage() {
             <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-border" /> OR <div className="h-px flex-1 bg-border" />
             </div>
+            */}
 
-            <form className="space-y-3" onSubmit={handleEmailSignIn}>
+            <form className="mt-6 space-y-3" onSubmit={handleEmailSignIn}>
               <Field
                 icon={Mail}
                 label="MGM College email"

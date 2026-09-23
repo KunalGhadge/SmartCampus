@@ -4,8 +4,10 @@ import { Eye, EyeOff, Mail, Lock, User, ShoppingBag, ShieldCheck } from "lucide-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { AuthAside, Field, SocialBtn } from "./login";
-import { signupWithEmail, loginWithGoogle, formatAuthErrorMessage } from "@/lib/auth-service";
+// import { AuthAside, Field, SocialBtn } from "./login";
+import { AuthAside, Field } from "./login";
+import { signupWithEmail, formatAuthErrorMessage } from "@/lib/auth-service";
+// import { loginWithGoogle } from "@/lib/auth-service";
 import { useRedirectAuthenticated } from "@/lib/route-auth";
 import { toast } from "sonner";
 
@@ -37,6 +39,7 @@ function SignupPage() {
     }
   };
 
+  /*
   const handleGoogleSignUp = async () => {
     setError("");
     setLoading(true);
@@ -57,6 +60,7 @@ function SignupPage() {
       description: "Please continue with Google or your MGM College email.",
     });
   };
+  */
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
@@ -85,6 +89,7 @@ function SignupPage() {
                 Use your MGM College email to get verified instantly.
               </p>
 
+              {/* Google / Apple Auth temporarily commented out
               <div className="mt-7 grid gap-2">
                 <SocialBtn provider="Google" onClick={handleGoogleSignUp} disabled={loading} />
                 <SocialBtn provider="Apple" onClick={handleAppleSignUp} disabled={loading} />
@@ -93,8 +98,9 @@ function SignupPage() {
                 <div className="h-px flex-1 bg-border" /> OR{" "}
                 <div className="h-px flex-1 bg-border" />
               </div>
+              */}
 
-              <form className="space-y-3" onSubmit={handleCreateAccount}>
+              <form className="mt-6 space-y-3" onSubmit={handleCreateAccount}>
                 <Field
                   icon={User}
                   label="Full name"
