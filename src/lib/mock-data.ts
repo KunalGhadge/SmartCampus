@@ -46,7 +46,7 @@ export const products: Product[] = [
     originalPrice: 720,
     category: "Books",
     condition: "Good",
-    sellerId: "user_rhea",
+    sellerId: "a1111111-0000-4000-a000-000000000001",
     image:
       "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -75,7 +75,7 @@ export const products: Product[] = [
     originalPrice: 89900,
     category: "Electronics",
     condition: "Like New",
-    sellerId: "user_yash",
+    sellerId: "a1111111-0000-4000-a000-000000000002",
     image:
       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -105,7 +105,7 @@ export const products: Product[] = [
     originalPrice: 1100,
     category: "Gadgets",
     condition: "Like New",
-    sellerId: "user_mihir",
+    sellerId: "a1111111-0000-4000-a000-000000000003",
     image:
       "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -135,7 +135,7 @@ export const products: Product[] = [
     originalPrice: 9500,
     category: "Cycles",
     condition: "Good",
-    sellerId: "user_devansh",
+    sellerId: "a1111111-0000-4000-a000-000000000004",
     image:
       "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -166,7 +166,7 @@ export const products: Product[] = [
     price: 380,
     category: "Hostel Essentials",
     condition: "New",
-    sellerId: "user_sana",
+    sellerId: "a1111111-0000-4000-a000-000000000005",
     image:
       "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -194,7 +194,7 @@ export const products: Product[] = [
     price: 120,
     category: "Notes",
     condition: "Like New",
-    sellerId: "user_ananya",
+    sellerId: "a1111111-0000-4000-a000-000000000006",
     image:
       "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -224,7 +224,7 @@ export const products: Product[] = [
     originalPrice: 4499,
     category: "Gadgets",
     condition: "Like New",
-    sellerId: "user_ishaan",
+    sellerId: "a1111111-0000-4000-a000-000000000007",
     image:
       "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -252,7 +252,7 @@ export const products: Product[] = [
     price: 950,
     category: "Furniture",
     condition: "Good",
-    sellerId: "user_tanvi",
+    sellerId: "a1111111-0000-4000-a000-000000000008",
     image:
       "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -281,7 +281,7 @@ export const products: Product[] = [
     price: 720,
     category: "Lab Equipment",
     condition: "Like New",
-    sellerId: "user_rohan",
+    sellerId: "a1111111-0000-4000-a000-000000000009",
     image:
       "https://images.unsplash.com/photo-1581090700227-1e37b190418e?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -310,7 +310,7 @@ export const products: Product[] = [
     originalPrice: 33900,
     category: "Electronics",
     condition: "Good",
-    sellerId: "user_sneha",
+    sellerId: "a1111111-0000-4000-a000-000000000010",
     image:
       "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -342,7 +342,7 @@ export const products: Product[] = [
     originalPrice: 1300,
     category: "Books",
     condition: "Good",
-    sellerId: "user_aditya",
+    sellerId: "a1111111-0000-4000-a000-000000000011",
     image:
       "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=70",
     seller: {
@@ -372,7 +372,7 @@ export const products: Product[] = [
     originalPrice: 6800,
     category: "Hostel Essentials",
     condition: "Good",
-    sellerId: "user_kabir",
+    sellerId: "a1111111-0000-4000-a000-000000000012",
     image:
       "https://images.unsplash.com/photo-1536353284924-9220c464e262?auto=format&fit=crop&w=900&q=70",
     seller: {

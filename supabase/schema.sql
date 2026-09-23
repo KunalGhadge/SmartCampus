@@ -10,7 +10,7 @@ create extension if not exists "uuid-ossp";
 -- 1. Profiles Table (linked to Supabase Auth users & campus peers)
 -- ------------------------------------------------------------------------------
 create table if not exists public.profiles (
-  id text primary key,
+  id uuid primary key default gen_random_uuid(),
   email text,
   full_name text,
   display_name text,
@@ -66,7 +66,7 @@ returns trigger as $$
 begin
   insert into public.profiles (id, email, full_name, display_name, avatar_url, verified, email_verified, campus, college)
   values (
-    new.id::text,
+    new.id,
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
     coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
@@ -333,18 +333,18 @@ create policy "Authenticated users can upload avatars"
 -- ------------------------------------------------------------------------------
 insert into public.profiles (id, email, full_name, display_name, avatar_url, campus, college, department, verified, email_verified, trust_score)
 values
-  ('user_rhea', 'rhea.k@mgmcollege.edu', 'Rhea Kulkarni', 'Rhea Kulkarni', 'https://i.pravatar.cc/120?img=12', 'MGM College', 'MGM College', 'Mechanical Engineering', true, true, 98),
-  ('user_yash', 'yash.t@mgmcollege.edu', 'Yash Tiwari', 'Yash Tiwari', 'https://i.pravatar.cc/120?img=47', 'MGM College', 'MGM CET', 'CSE', true, true, 97),
-  ('user_mihir', 'mihir.j@mgmcollege.edu', 'Mihir Jain', 'Mihir Jain', 'https://i.pravatar.cc/120?img=33', 'MGM College', 'MGM University', 'EEE', true, true, 99),
-  ('user_devansh', 'devansh.k@mgmcollege.edu', 'Devansh Kapoor', 'Devansh Kapoor', 'https://i.pravatar.cc/120?img=14', 'MGM College', 'MGM College', 'Civil Engineering', true, true, 94),
-  ('user_sana', 'sana.t@mgmcollege.edu', 'Sana Thomas', 'Sana Thomas', 'https://i.pravatar.cc/120?img=20', 'MGM College', 'MGM CET', 'ECE', true, true, 96),
-  ('user_ananya', 'ananya.s@mgmcollege.edu', 'Ananya Sharma', 'Ananya Sharma', 'https://i.pravatar.cc/120?img=32', 'MGM College', 'MGM University', 'Computer Science', true, true, 98),
-  ('user_ishaan', 'ishaan.v@mgmcollege.edu', 'Ishaan Verma', 'Ishaan Verma', 'https://i.pravatar.cc/120?img=15', 'MGM College', 'MGM College', 'IT', true, true, 96),
-  ('user_tanvi', 'tanvi.p@mgmcollege.edu', 'Tanvi Patel', 'Tanvi Patel', 'https://i.pravatar.cc/120?img=22', 'MGM College', 'MGM CET', 'Architecture', true, true, 95),
-  ('user_rohan', 'rohan.d@mgmcollege.edu', 'Rohan Das', 'Rohan Das', 'https://i.pravatar.cc/120?img=8', 'MGM College', 'MGM College', 'Electrical Engineering', true, true, 97),
-  ('user_sneha', 'sneha.r@mgmcollege.edu', 'Sneha Rao', 'Sneha Rao', 'https://i.pravatar.cc/120?img=49', 'MGM College', 'MGM College', 'Chemical Engineering', true, true, 96),
-  ('user_aditya', 'aditya.j@mgmcollege.edu', 'Aditya Joshi', 'Aditya Joshi', 'https://i.pravatar.cc/120?img=11', 'MGM College', 'MGM University', 'Engineering Physics', true, true, 97),
-  ('user_kabir', 'kabir.s@mgmcollege.edu', 'Kabir Shah', 'Kabir Shah', 'https://i.pravatar.cc/120?img=7', 'MGM College', 'MGM CET', 'MBA', true, true, 95)
+  ('a1111111-0000-4000-a000-000000000001', 'rhea.k@mgmcollege.edu', 'Rhea Kulkarni', 'Rhea Kulkarni', 'https://i.pravatar.cc/120?img=12', 'MGM College', 'MGM College', 'Mechanical Engineering', true, true, 98),
+  ('a1111111-0000-4000-a000-000000000002', 'yash.t@mgmcollege.edu', 'Yash Tiwari', 'Yash Tiwari', 'https://i.pravatar.cc/120?img=47', 'MGM College', 'MGM CET', 'CSE', true, true, 97),
+  ('a1111111-0000-4000-a000-000000000003', 'mihir.j@mgmcollege.edu', 'Mihir Jain', 'Mihir Jain', 'https://i.pravatar.cc/120?img=33', 'MGM College', 'MGM University', 'EEE', true, true, 99),
+  ('a1111111-0000-4000-a000-000000000004', 'devansh.k@mgmcollege.edu', 'Devansh Kapoor', 'Devansh Kapoor', 'https://i.pravatar.cc/120?img=14', 'MGM College', 'MGM College', 'Civil Engineering', true, true, 94),
+  ('a1111111-0000-4000-a000-000000000005', 'sana.t@mgmcollege.edu', 'Sana Thomas', 'Sana Thomas', 'https://i.pravatar.cc/120?img=20', 'MGM College', 'MGM CET', 'ECE', true, true, 96),
+  ('a1111111-0000-4000-a000-000000000006', 'ananya.s@mgmcollege.edu', 'Ananya Sharma', 'Ananya Sharma', 'https://i.pravatar.cc/120?img=32', 'MGM College', 'MGM University', 'Computer Science', true, true, 98),
+  ('a1111111-0000-4000-a000-000000000007', 'ishaan.v@mgmcollege.edu', 'Ishaan Verma', 'Ishaan Verma', 'https://i.pravatar.cc/120?img=15', 'MGM College', 'MGM College', 'IT', true, true, 96),
+  ('a1111111-0000-4000-a000-000000000008', 'tanvi.p@mgmcollege.edu', 'Tanvi Patel', 'Tanvi Patel', 'https://i.pravatar.cc/120?img=22', 'MGM College', 'MGM CET', 'Architecture', true, true, 95),
+  ('a1111111-0000-4000-a000-000000000009', 'rohan.d@mgmcollege.edu', 'Rohan Das', 'Rohan Das', 'https://i.pravatar.cc/120?img=8', 'MGM College', 'MGM College', 'Electrical Engineering', true, true, 97),
+  ('a1111111-0000-4000-a000-000000000010', 'sneha.r@mgmcollege.edu', 'Sneha Rao', 'Sneha Rao', 'https://i.pravatar.cc/120?img=49', 'MGM College', 'MGM College', 'Chemical Engineering', true, true, 96),
+  ('a1111111-0000-4000-a000-000000000011', 'aditya.j@mgmcollege.edu', 'Aditya Joshi', 'Aditya Joshi', 'https://i.pravatar.cc/120?img=11', 'MGM College', 'MGM University', 'Engineering Physics', true, true, 97),
+  ('a1111111-0000-4000-a000-000000000012', 'kabir.s@mgmcollege.edu', 'Kabir Shah', 'Kabir Shah', 'https://i.pravatar.cc/120?img=7', 'MGM College', 'MGM CET', 'MBA', true, true, 95)
 on conflict (id) do update
 set
   display_name = excluded.display_name,
