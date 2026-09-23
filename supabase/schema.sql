@@ -226,11 +226,37 @@ create policy "Authenticated users can send messages."
   on public.messages for insert
   with check ( true );
 
--- Enable Realtime publication for messages, listings, item requests, and profiles
-alter publication supabase_realtime add table public.messages;
-alter publication supabase_realtime add table public.listings;
-alter publication supabase_realtime add table public.item_requests;
-alter publication supabase_realtime add table public.profiles;
+-- Enable Realtime publication for messages, listings, item requests, and profiles (Safe / Idempotent)
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables 
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'messages'
+  ) then
+    alter publication supabase_realtime add table public.messages;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables 
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'listings'
+  ) then
+    alter publication supabase_realtime add table public.listings;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables 
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'item_requests'
+  ) then
+    alter publication supabase_realtime add table public.item_requests;
+  end if;
+
+  if not exists (
+    select 1 from pg_publication_tables 
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'profiles'
+  ) then
+    alter publication supabase_realtime add table public.profiles;
+  end if;
+end $$;
 
 
 -- ------------------------------------------------------------------------------
