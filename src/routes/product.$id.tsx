@@ -43,6 +43,7 @@ import { ListingSafetyBanner } from "@/components/listing-safety-banner";
 import { analyzeListingRisk } from "@/lib/product-safety";
 import { toast } from "sonner";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { requestRentalReturn, addOrUpdateRental } from "@/lib/rentals";
 
 export const Route = createFileRoute("/product/$id")({
   component: ProductDetails,
@@ -532,7 +533,7 @@ function ProductDetails() {
                         if (navigator.share) {
                           navigator.share({
                             title: product.title,
-                            text: `Check out ${product.title} on SmartCampus for ₹${product.price}!`,
+                            text: `Check out ${product.title} on CampusKart for ₹${product.price}!`,
                             url: window.location.href,
                           }).catch(() => {});
                         } else {
@@ -879,7 +880,12 @@ function ProductDetails() {
                 <Button
                   className="rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90"
                   disabled={!product.forRent || returnStatus !== "Active Rental"}
-                  onClick={() => setReturnStatus("Return Requested")}
+                  onClick={() => {
+                    setReturnStatus("Return Requested");
+                    requestRentalReturn(product.id, returnDate);
+                    toast.success("Return request submitted! Owner notified.");
+                    setReturnOpen(false);
+                  }}
                 >
                   Confirm return request
                 </Button>
@@ -1053,7 +1059,7 @@ function ProductDetails() {
                   Listing Marked as Sold! 🎉
                 </DialogTitle>
                 <DialogDescription className="text-center text-sm text-muted-foreground pt-1">
-                  You successfully traded on SmartCampus.
+                  You successfully traded on CampusKart.
                 </DialogDescription>
               </DialogHeader>
 

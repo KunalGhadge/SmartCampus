@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, SlidersHorizontal, X, ChevronDown, Check, MapPin } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronDown, Check, MapPin, HandHeart } from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/navbar";
@@ -9,6 +9,7 @@ import { CategoryIcon } from "@/components/category-icon";
 import { Button } from "@/components/ui/button";
 import { type Category } from "@/lib/mock-data";
 import { categorySummaries, useCatalog } from "@/lib/catalog";
+import { RequestItemModal } from "@/components/request-item-modal";
 import { cn } from "@/lib/utils";
 import { CAMPUSES } from "@/lib/campus";
 
@@ -26,6 +27,7 @@ function MarketplacePage() {
   const { products, loading, firestoreError } = useCatalog();
   const categories = useMemo(() => categorySummaries(products), [products]);
 
+  const [requestModalOpen, setRequestModalOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<Category | null>(
     (search.category as Category) ?? null,
@@ -122,7 +124,7 @@ function MarketplacePage() {
               Marketplace
             </h1>
             <p className="mt-2 text-muted-foreground">
-              Discover what MGM College students are buying, selling and renting today on SmartCampus.
+              Discover what MGM College students are buying, selling and renting today on CampusKart.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -135,7 +137,14 @@ function MarketplacePage() {
                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
-              <div className="flex gap-2 sm:contents">
+              <div className="flex flex-wrap gap-2 sm:contents">
+                <Button
+                  onClick={() => setRequestModalOpen(true)}
+                  className="flex-1 rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90 sm:flex-none"
+                >
+                  <HandHeart className="mr-1.5 h-4 w-4" />
+                  Request Item
+                </Button>
                 <button
                   onClick={() =>
                     document.getElementById("mobile-filters")?.classList.toggle("hidden")
@@ -488,6 +497,7 @@ function MarketplacePage() {
           </section>
         </div>
       </main>
+      <RequestItemModal open={requestModalOpen} onClose={() => setRequestModalOpen(false)} />
       <Footer />
     </div>
   );

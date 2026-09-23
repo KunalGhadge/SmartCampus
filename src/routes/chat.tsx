@@ -381,7 +381,7 @@ function ChatPage() {
         id: "ai_welcome",
         threadId: AI_ASSISTANT_THREAD.id,
         from: "ai",
-        text: "Hi! 👋 I'm your MGM SmartCampus AI Assistant. Ask me about textbook recommendations, fair prices, hostel gear, or campus survival tips!",
+        text: "Hi! 👋 I'm your MGM CampusKart AI Assistant. Ask me about textbook recommendations, fair prices, hostel gear, or campus survival tips!",
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         delivery: "delivered",
         authorId: "smartcampus_ai",

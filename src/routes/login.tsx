@@ -68,7 +68,7 @@ function LoginPage() {
             <div className="grid h-8 w-8 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
               <ShoppingBag className="h-4 w-4" />
             </div>
-            <span className="text-sm font-semibold lg:hidden">SmartCampus</span>
+            <span className="text-sm font-semibold lg:hidden">CampusKart</span>
           </Link>
           <ThemeToggle />
         </div>
@@ -79,7 +79,7 @@ function LoginPage() {
             className="w-full max-w-sm"
           >
             <h1 className="font-display text-3xl font-semibold tracking-tight">Welcome back</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your SmartCampus account.</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your CampusKart account.</p>
 
             {/* Google / Apple Auth temporarily commented out
             <div className="mt-7 grid gap-2">
@@ -234,7 +234,7 @@ export function AuthAside() {
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-background/15 backdrop-blur">
           <ShoppingBag className="h-4 w-4" />
         </div>
-        <span className="font-semibold">SmartCampus · MGM College</span>
+        <span className="font-semibold">CampusKart · MGM College</span>
       </div>
       <div className="relative max-w-md">
         <Sparkles className="h-6 w-6 opacity-80" />
@@ -261,7 +261,7 @@ export function AuthAside() {
           </span>
         </div>
       </div>
-      <div className="relative text-xs opacity-60">© SmartCampus · Built for MGM College students</div>
+      <div className="relative text-xs opacity-60">© CampusKart · Built for MGM College students</div>
     </div>
   );
 }

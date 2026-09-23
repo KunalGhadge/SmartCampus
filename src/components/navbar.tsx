@@ -87,7 +87,7 @@ export function Navbar() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight">
-              Smart<span className="text-brand-gradient">Campus</span>
+              Campus<span className="text-brand-gradient">Kart</span>
             </span>
             <span className="rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-primary">
               MGM

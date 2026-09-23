@@ -55,6 +55,7 @@ function Landing() {
       <main>
         <Hero onRequestItem={() => setRequestModalOpen(true)} />
         <Stats />
+        <HowItWorks />
         <MarketplacePulse />
         <Categories />
         <Featured />
@@ -86,16 +87,16 @@ function Hero({ onRequestItem }: { onRequestItem: () => void }) {
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3.5 py-1 text-xs font-semibold text-primary backdrop-blur shadow-sm">
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            MGM College Student Marketplace · Verified Campus Hub
+            CampusKart · MGM College Student Marketplace
           </span>
           <h1 className="mt-6 font-display text-5xl font-semibold italic leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-            Buy, sell & exchange
+            Buy, sell & rent
             <br />
-            <span className="text-brand-gradient">within MGM College.</span>
+            <span className="text-brand-gradient">on CampusKart MGM.</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
             The trusted marketplace built exclusively for verified MGM students. Books, gadgets, notes,
-            cycles, hostel essentials — all from peers you can meet right on campus.
+            cycles, hostel essentials — all from classmates you can meet safely on campus.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link to="/marketplace">
@@ -184,6 +185,67 @@ function Stats() {
             </div>
             <div className="mt-1 text-sm text-muted-foreground">{s.l}</div>
           </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    {
+      step: "01",
+      title: "Verified Student Sign-In",
+      desc: "Join with your MGM College email to connect only with verified classmates on campus.",
+      badge: "100% Campus Only",
+    },
+    {
+      step: "02",
+      title: "AI Fair Pricing & Instant Chat",
+      desc: "Browse textbooks, cycles, & gadgets with AI fair-price benchmarks and instant realtime chat.",
+      badge: "Zero Latency",
+    },
+    {
+      step: "03",
+      title: "Safe On-Campus Meetups",
+      desc: "Meet at Central Library or Cafeteria, inspect before paying via UPI, and earn Reward Points.",
+      badge: "Safe Handover",
+    },
+  ];
+
+  return (
+    <section className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <div className="text-center max-w-2xl mx-auto mb-14">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-0.5 text-xs font-semibold text-primary">
+          <Sparkles className="h-3.5 w-3.5" /> How CampusKart Works
+        </span>
+        <h2 className="mt-3 font-display text-3xl font-semibold italic sm:text-4xl">
+          Trading made simple for MGM College.
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          No stranger meetups, no courier delays, and zero hidden commissions.
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3">
+        {steps.map((s, idx) => (
+          <motion.div
+            key={s.step}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: idx * 0.1 }}
+            className="group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-b from-card to-secondary/20 p-8 shadow-soft hover:border-primary/40 transition-all duration-300"
+          >
+            <div className="text-4xl font-display font-bold italic text-primary/30 group-hover:text-primary/60 transition-colors">
+              {s.step}
+            </div>
+            <span className="mt-4 inline-block rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
+              {s.badge}
+            </span>
+            <h3 className="mt-3 text-lg font-semibold text-foreground">{s.title}</h3>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{s.desc}</p>
+          </motion.div>
         ))}
       </div>
     </section>
@@ -591,61 +653,6 @@ function FeaturedDeals() {
               </div>
               <h3 className="mt-5 text-lg font-semibold">{d.t}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{d.d}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function HowItWorks() {
-  const steps = [
-    {
-      icon: BadgeCheck,
-      t: "Verify your MGM student ID",
-      d: "Sign up with your MGM student account or college email to get instantly verified.",
-    },
-    {
-      icon: Search,
-      t: "List or browse",
-      d: "Post your item in 30 seconds, or browse curated MGM campus listings.",
-    },
-    {
-      icon: MessageCircle,
-      t: "Chat & meet up on campus",
-      d: "Message safely and coordinate a meet-up at the Central Library, Canteen, or Hostel.",
-    },
-  ];
-  return (
-    <section className="relative py-24 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-amber-50/20 via-background to-amber-50/50 dark:from-amber-950/10 dark:via-background dark:to-amber-950/20" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(59,130,246,0.08),transparent_70%)]" />
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="font-display text-3xl font-semibold italic tracking-tight sm:text-4xl">
-            How it works
-          </h2>
-          <p className="mt-3 text-muted-foreground">Three steps from idea to handshake.</p>
-        </div>
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {steps.map((s, i) => (
-            <motion.div
-              key={s.t}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="rounded-2xl border border-border bg-card p-7 shadow-soft"
-            >
-              <div className="grid h-11 w-11 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
-                <s.icon className="h-5 w-5" />
-              </div>
-              <div className="mt-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Step {i + 1}
-              </div>
-              <h3 className="mt-1 text-lg font-semibold">{s.t}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
             </motion.div>
           ))}
         </div>

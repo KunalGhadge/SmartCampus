@@ -110,7 +110,7 @@ function WalletPage() {
             Campus Rewards & Perks Hub
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Earn points by trading, verifying, and reviewing on SmartCampus. Redeem points for listing boosts and badges!
+            Earn points by trading, verifying, and reviewing on CampusKart. Redeem points for listing boosts and badges!
           </p>
         </div>
 
@@ -216,7 +216,7 @@ function WalletPage() {
                     <span>Invite a Classmate</span>
                     <span className="font-bold text-purple-500">+30 pts</span>
                   </div>
-                  <p className="text-muted-foreground mt-0.5">Share SmartCampus with fellow students.</p>
+                  <p className="text-muted-foreground mt-0.5">Share CampusKart with fellow students.</p>
                   <button
                     onClick={handleShareInvite}
                     className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline mt-1 inline-flex items-center gap-1"

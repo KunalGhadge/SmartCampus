@@ -14,7 +14,7 @@ export function Footer() {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xl font-bold tracking-tight">
-                Smart<span className="text-brand-gradient">Campus</span>
+                Campus<span className="text-brand-gradient">Kart</span>
               </span>
               <span className="rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-primary">
                 MGM
@@ -27,16 +27,19 @@ export function Footer() {
           </p>
           <div className="mt-6 flex gap-3 text-muted-foreground">
             <a
-              href="#"
-              className="rounded-full border border-border p-2 transition hover:text-foreground"
+              href="https://www.instagram.com/campuskart.business?stkn=MWx0Nms4c2piaGFhaA=="
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-border p-2 transition hover:text-foreground hover:border-primary hover:bg-primary/5"
+              aria-label="CampusKart Instagram"
             >
-              <Twitter className="h-4 w-4" />
+              <Instagram className="h-4 w-4" />
             </a>
             <a
               href="#"
               className="rounded-full border border-border p-2 transition hover:text-foreground"
             >
-              <Instagram className="h-4 w-4" />
+              <Twitter className="h-4 w-4" />
             </a>
             <a
               href="#"
@@ -71,7 +74,7 @@ export function Footer() {
       </div>
       <div className="border-t border-border/60">
         <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
-          <span>© {new Date().getFullYear()} SmartCampus. Built for students, by students.</span>
+          <span>© {new Date().getFullYear()} CampusKart. Built for students, by students.</span>
           <span>Made with care · v1.0</span>
         </div>
       </div>

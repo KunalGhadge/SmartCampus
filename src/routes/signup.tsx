@@ -64,7 +64,7 @@ function SignupPage() {
             <div className="grid h-8 w-8 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
               <ShoppingBag className="h-4 w-4" />
             </div>
-            <span className="text-sm font-semibold lg:hidden">SmartCampus</span>
+            <span className="text-sm font-semibold lg:hidden">CampusKart</span>
           </Link>
           <ThemeToggle />
         </div>

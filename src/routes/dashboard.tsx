@@ -12,7 +12,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { conversations, type Category, type Product } from "@/lib/mock-data";
+import { type Category, type Product } from "@/lib/mock-data";
 import { createListing, fetchListingsBySeller } from "@/lib/firestore-listings";
 import { PRODUCT_CATEGORIES, useCatalog } from "@/lib/catalog";
 import { useCampus } from "@/lib/campus";
@@ -30,6 +30,9 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { buildFallbackUserProfile, useCurrentUserProfile } from "@/lib/user-profile";
 import { useAuth } from "@/lib/auth";
+import { fetchUserChatThreads } from "@/lib/supabase-chat";
+import type { ChatThread } from "@/lib/chat-socket";
+import { getUserRentals, saveUserRentals, requestRentalReturn, type CampusRental } from "@/lib/rentals";
 import AccountOverview from "@/components/account-overview";
 import { toast } from "sonner";
 
@@ -44,6 +47,26 @@ function DashboardPage() {
   const wishlist = useWishlist();
 
   const [myListings, setMyListings] = useState<Product[]>([]);
+  const [realThreads, setRealThreads] = useState<ChatThread[]>([]);
+  const [userRentals, setUserRentals] = useState<CampusRental[]>(() => {
+    const saved = getUserRentals();
+    if (saved.length > 0) return saved;
+    // Initialize with demo rentals if none
+    const demo = products.filter((p) => p.forRent).slice(0, 2).map((p, idx) => ({
+      id: p.id,
+      productId: p.id,
+      productTitle: p.title,
+      productImage: p.image,
+      rentPerDay: p.rentPerDay || 80,
+      pickupLocation: p.pickupLocation || "Campus Main Gate",
+      startDate: new Date().toISOString().slice(0, 10),
+      returnByDate: new Date(Date.now() + (idx + 3) * 86400000).toISOString().slice(0, 10),
+      status: (idx === 0 ? "Active Rental" : "Return Requested") as CampusRental["status"],
+    }));
+    saveUserRentals(demo);
+    return demo;
+  });
+
   const [listingOpen, setListingOpen] = useState(false);
   const [listingSubmitting, setListingSubmitting] = useState(false);
   const [listingForm, setListingForm] = useState({
@@ -57,7 +80,6 @@ function DashboardPage() {
     rentPerDay: "",
   });
 
-  const rentals = useMemo(() => products.filter((p) => p.forRent).slice(0, 4), [products]);
   const [returnOpen, setReturnOpen] = useState(false);
   const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
   const [returnDate, setReturnDate] = useState<string>(() => {
@@ -66,15 +88,6 @@ function DashboardPage() {
     return d.toISOString().slice(0, 10);
   });
   const [returnNote, setReturnNote] = useState("");
-  const [rentalStatus, setRentalStatus] = useState<
-    Record<string, "Active Rental" | "Return Requested" | "Returned Successfully">
-  >(() => {
-    const init: Record<string, "Active Rental" | "Return Requested" | "Returned Successfully"> = {};
-    rentals.forEach((r, idx) => {
-      init[r.id] = idx === 0 ? "Active Rental" : idx === 1 ? "Return Requested" : "Active Rental";
-    });
-    return init;
-  });
   const profile = profileQuery.data ?? (user ? buildFallbackUserProfile(user) : null);
 
   useEffect(() => {
@@ -107,10 +120,15 @@ function DashboardPage() {
 
   const selectedRental = selectedRentalId ? products.find((p) => p.id === selectedRentalId) : null;
 
-  const peerConversations = useMemo(
-    () => conversations.filter((c) => !(c as { isBot?: boolean }).isBot),
-    [],
-  );
+  useEffect(() => {
+    if (!user?.uid) {
+      setRealThreads([]);
+      return;
+    }
+    void fetchUserChatThreads(user.uid).then((threads) => {
+      setRealThreads(threads.filter((t) => !t.isBot));
+    });
+  }, [user?.uid]);
 
   const submitNewListing = async () => {
     if (!user?.uid) return;
@@ -414,53 +432,101 @@ function DashboardPage() {
           {/* Wishlist */}
           <section className="mt-12 grid gap-6 lg:grid-cols-2">
             <div className="rounded-2xl border border-border bg-card p-6">
-              <h3 className="text-sm font-semibold">Wishlist</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Wishlist ({wishlist.count})</h3>
+                <Link to="/marketplace" className="text-xs text-primary hover:underline">
+                  Browse more
+                </Link>
+              </div>
               <ul className="mt-4 space-y-3">
                 {wishlist.count === 0 ? (
-                  <li className="text-sm text-muted-foreground">
+                  <li className="text-sm text-muted-foreground py-4 text-center">
                     Save items from the marketplace with the heart icon.
                   </li>
                 ) : (
                   wishlist.items.map((p) => (
-                    <li key={p.id} className="flex items-center gap-3">
-                      <img src={p.image} className="h-12 w-12 rounded-lg object-cover" alt="" />
-                      <div className="flex-1 min-w-0">
-                        <div className="line-clamp-1 text-sm font-medium">{p.title}</div>
-                        <div className="text-xs text-muted-foreground">
-                          ₹{p.price.toLocaleString("en-IN")} · {p.seller.college}
+                    <li key={p.id} className="flex items-center justify-between gap-3 group">
+                      <Link
+                        to="/product/$id"
+                        params={{ id: p.id }}
+                        className="flex items-center gap-3 flex-1 min-w-0"
+                      >
+                        <img src={p.image} className="h-12 w-12 rounded-xl object-cover" alt="" />
+                        <div className="flex-1 min-w-0">
+                          <div className="line-clamp-1 text-sm font-medium group-hover:text-primary transition">
+                            {p.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            ₹{p.price.toLocaleString("en-IN")} · {p.seller.college}
+                          </div>
                         </div>
-                      </div>
-                      <Heart className="h-4 w-4 shrink-0 fill-destructive text-destructive" />
+                      </Link>
+                      <button
+                        onClick={() => {
+                          wishlist.toggle(p);
+                          toast.info(`Removed "${p.title}" from wishlist.`);
+                        }}
+                        className="p-2 hover:bg-secondary rounded-full transition"
+                        aria-label="Remove from wishlist"
+                      >
+                        <Heart className="h-4 w-4 shrink-0 fill-destructive text-destructive" />
+                      </button>
                     </li>
                   ))
                 )}
               </ul>
             </div>
             <div className="rounded-2xl border border-border bg-card p-6">
-              <h3 className="text-sm font-semibold">Recent chats</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Recent chats</h3>
+                <Link to="/chat" search={{ peerUid: undefined, peerName: undefined, peerAvatar: undefined }} className="text-xs text-primary hover:underline">
+                  Open inbox
+                </Link>
+              </div>
               <ul className="mt-4 space-y-3">
-                {peerConversations.map((c) => (
-                  <li key={c.id} className="flex items-center gap-3">
-                    <div className="relative">
-                      <img src={c.avatar} alt="" className="h-10 w-10 rounded-full" />
-                      {c.online && (
-                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium">{c.name}</div>
-                        <div className="text-[11px] text-muted-foreground">{c.time}</div>
-                      </div>
-                      <div className="line-clamp-1 text-xs text-muted-foreground">{c.lastMsg}</div>
-                    </div>
-                    {c.unread > 0 && (
-                      <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
-                        {c.unread}
-                      </span>
-                    )}
+                {realThreads.length === 0 ? (
+                  <li className="text-sm text-muted-foreground py-4 text-center">
+                    No recent chats yet. Direct conversations with sellers will appear here.
                   </li>
-                ))}
+                ) : (
+                  realThreads.slice(0, 5).map((c) => {
+                    const parts = c.id.replace("dm_", "").split("_");
+                    const peerUid = parts.find((id) => id !== user?.uid);
+                    return (
+                      <li key={c.id}>
+                        <Link
+                          to="/chat"
+                          search={{
+                            peerUid: peerUid,
+                            peerName: c.name,
+                            peerAvatar: c.avatar,
+                            product: c.product,
+                          }}
+                          className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/50 transition"
+                        >
+                          <div className="relative">
+                            <img src={c.avatar} alt="" className="h-10 w-10 rounded-full" />
+                            {c.online && (
+                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-success ring-2 ring-card" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-medium">{c.name}</div>
+                              <div className="text-[11px] text-muted-foreground">{c.time}</div>
+                            </div>
+                            <div className="line-clamp-1 text-xs text-muted-foreground">{c.lastMsg}</div>
+                          </div>
+                          {c.unread > 0 && (
+                            <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                              {c.unread}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })
+                )}
               </ul>
             </div>
           </section>
@@ -472,29 +538,33 @@ function DashboardPage() {
               <div className="text-sm text-muted-foreground">Manage returns and track status</div>
             </div>
 
-            {rentals.length === 0 ? (
+            {userRentals.length === 0 ? (
               <div className="grid place-items-center rounded-2xl border border-dashed border-border bg-card py-16 text-center">
                 <div className="grid h-12 w-12 place-items-center rounded-2xl bg-secondary text-foreground shadow-soft">
                   <RotateCcw className="h-5 w-5" />
                 </div>
                 <div className="mt-4 text-sm font-semibold">No rentals yet</div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  Rent items from the marketplace to see them here.
+                  Rent cycles, gadgets or calculators from the marketplace to track them here.
                 </div>
+                <Link to="/marketplace" className="mt-4">
+                  <Button size="sm" variant="outline" className="rounded-full">
+                    Browse marketplace
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
-                {rentals.map((p, i) => {
-                  const status = rentalStatus[p.id] ?? "Active Rental";
+                {userRentals.map((r, i) => {
                   const chip =
-                    status === "Returned Successfully"
+                    r.status === "Returned Successfully"
                       ? "bg-success/15 text-success"
-                      : status === "Return Requested"
+                      : r.status === "Return Requested"
                         ? "bg-warning/15 text-warning"
                         : "bg-primary/10 text-primary";
                   return (
                     <motion.div
-                      key={p.id}
+                      key={r.id}
                       initial={{ opacity: 0, y: 12 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
@@ -502,27 +572,27 @@ function DashboardPage() {
                       className="rounded-2xl border border-border bg-card p-5 shadow-soft"
                     >
                       <div className="flex items-start gap-4">
-                        <img src={p.image} alt="" className="h-16 w-16 rounded-xl object-cover" />
+                        <img src={r.productImage} alt="" className="h-16 w-16 rounded-xl object-cover" />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <div className="line-clamp-1 text-sm font-semibold">{p.title}</div>
+                              <div className="line-clamp-1 text-sm font-semibold">{r.productTitle}</div>
                               <div className="mt-1 text-xs text-muted-foreground">
-                                ₹{p.rentPerDay}/day · {p.pickupLocation ?? p.seller.college}
+                                ₹{r.rentPerDay}/day · {r.pickupLocation}
                               </div>
                             </div>
                             <span
                               className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${chip}`}
                             >
-                              {status}
+                              {r.status}
                             </span>
                           </div>
                           <div className="mt-4 flex flex-wrap items-center gap-2">
                             <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/40 px-3 py-1 text-[11px] text-muted-foreground">
                               <CalendarDays className="h-3.5 w-3.5 text-foreground" />
-                              Return by {returnDate}
+                              Return by {r.returnByDate}
                             </div>
-                            <Link to="/product/$id" params={{ id: p.id }}>
+                            <Link to="/product/$id" params={{ id: r.productId }}>
                               <Button size="sm" variant="outline" className="rounded-full">
                                 View listing
                               </Button>
@@ -530,9 +600,9 @@ function DashboardPage() {
                             <Button
                               size="sm"
                               className="rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90"
-                              disabled={status !== "Active Rental"}
+                              disabled={r.status !== "Active Rental"}
                               onClick={() => {
-                                setSelectedRentalId(p.id);
+                                setSelectedRentalId(r.productId);
                                 setReturnOpen(true);
                               }}
                             >
@@ -621,7 +691,9 @@ function DashboardPage() {
                     className="rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90"
                     onClick={() => {
                       if (selectedRentalId) {
-                        setRentalStatus((s) => ({ ...s, [selectedRentalId]: "Return Requested" }));
+                        requestRentalReturn(selectedRentalId, returnDate, returnNote);
+                        setUserRentals(getUserRentals());
+                        toast.success("Return request submitted! Owner notified.");
                       }
                       setReturnNote("");
                       setReturnOpen(false);
