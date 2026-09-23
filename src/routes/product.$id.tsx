@@ -176,15 +176,20 @@ function ProductDetails() {
     }
   };
 
-  const aiPrice = Math.round(product.price * 0.96);
-  const trend = [
-    { m: "Apr", p: aiPrice + 400 },
-    { m: "May", p: aiPrice + 280 },
-    { m: "Jun", p: aiPrice + 150 },
-    { m: "Jul", p: aiPrice + 80 },
-    { m: "Aug", p: aiPrice + 30 },
-    { m: "Sep", p: aiPrice },
-  ];
+  const aiPrice = Math.round(product.price * 0.95);
+  const trend = useMemo(() => {
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const now = new Date();
+    const points = [];
+    const multipliers = [1.14, 1.10, 1.07, 1.04, 1.02, 1.0];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mName = monthNames[d.getMonth()];
+      const priceVal = Math.round(aiPrice * multipliers[5 - i]);
+      points.push({ m: mName, p: priceVal });
+    }
+    return points;
+  }, [aiPrice]);
 
   const [reviews, setReviews] = useState(() => [
     {
@@ -384,9 +389,9 @@ function ProductDetails() {
                       <Sparkles className="h-4 w-4" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold">AI fair-price estimate</div>
+                      <div className="text-sm font-semibold">AI Campus Price Benchmark</div>
                       <div className="text-xs text-muted-foreground">
-                        Based on 142 similar campus listings
+                        Analyzed against recent {product.category.toLowerCase()} deals on campus
                       </div>
                     </div>
                   </div>
@@ -396,30 +401,43 @@ function ProductDetails() {
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-3">
                   <div>
-                    <div className="text-xs text-muted-foreground">Estimated value</div>
+                    <div className="text-xs text-muted-foreground">Fair Market Value</div>
                     <div className="mt-1 text-lg font-bold">₹{aiPrice.toLocaleString("en-IN")}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Demand</div>
+                    <div className="text-xs text-muted-foreground">Campus Demand</div>
                     <div className="mt-1 flex items-center gap-1 text-sm font-semibold text-success">
                       <TrendingUp className="h-3.5 w-3.5" /> High
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Condition impact</div>
-                    <div className="mt-1 text-sm font-semibold">+8% premium</div>
+                    <div className="text-xs text-muted-foreground">Deal Rating</div>
+                    <div className="mt-1 text-sm font-semibold">
+                      {product.price <= aiPrice ? "🔥 Great Value" : "Fair Price"}
+                    </div>
                   </div>
                 </div>
-                <div className="mt-4 h-24">
+
+                <div className="mt-4 flex items-center justify-between text-[11px] font-medium text-muted-foreground">
+                  <span>6-Month Resale Trend</span>
+                  <span>Hover / tap curve for monthly average</span>
+                </div>
+
+                <div className="mt-1.5 h-28">
                   <ResponsiveContainer>
-                    <AreaChart data={trend} margin={{ left: 0, right: 0, top: 6, bottom: 0 }}>
+                    <AreaChart data={trend} margin={{ left: 8, right: 8, top: 8, bottom: 0 }}>
                       <defs>
                         <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="var(--primary)" stopOpacity={0.5} />
                           <stop offset="100%" stopColor="var(--primary)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="m" hide />
+                      <XAxis 
+                        dataKey="m" 
+                        tickLine={false} 
+                        axisLine={false} 
+                        tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} 
+                      />
                       <YAxis hide domain={["auto", "auto"]} />
                       <Tooltip
                         contentStyle={{
@@ -428,7 +446,8 @@ function ProductDetails() {
                           borderRadius: 12,
                           fontSize: 12,
                         }}
-                        formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Avg"]}
+                        labelFormatter={(label) => `${label} Campus Median`}
+                        formatter={(v: number) => [`₹${v.toLocaleString("en-IN")}`, "Avg Resale Price"]}
                       />
                       <Area
                         type="monotone"
