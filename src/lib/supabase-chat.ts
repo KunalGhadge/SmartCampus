@@ -154,6 +154,50 @@ export function subscribeToSupabaseThread(
   };
 }
 
+export function subscribeToSupabasePresence(
+  currentUserId: string,
+  onPresenceChange: (onlineUserIds: Set<string>) => void,
+) {
+  if (!isSupabaseConfigured || !currentUserId) {
+    return () => {};
+  }
+
+  const room = supabase.channel("online-presence", {
+    config: {
+      presence: {
+        key: currentUserId,
+      },
+    },
+  });
+
+  const extractOnlineUsers = () => {
+    const state = room.presenceState();
+    const onlineSet = new Set<string>();
+    Object.keys(state).forEach((key) => {
+      onlineSet.add(key);
+    });
+    onPresenceChange(onlineSet);
+  };
+
+  room
+    .on("presence", { event: "sync" }, extractOnlineUsers)
+    .on("presence", { event: "join" }, extractOnlineUsers)
+    .on("presence", { event: "leave" }, extractOnlineUsers)
+    .subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await room.track({
+          user_id: currentUserId,
+          online_at: new Date().toISOString(),
+        });
+      }
+    });
+
+  return () => {
+    void room.untrack();
+    void supabase.removeChannel(room);
+  };
+}
+
 export async function fetchUserChatThreads(currentUserId: string): Promise<ChatThread[]> {
   const baseThreads: ChatThread[] = [AI_ASSISTANT_THREAD];
   if (!isSupabaseConfigured || !currentUserId) return baseThreads;
