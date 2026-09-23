@@ -46,6 +46,7 @@ import {
   subscribeToSupabaseThread,
   subscribeToSupabasePresence,
   fetchUserChatThreads,
+  subscribeToUserNewMessages,
 } from "@/lib/supabase-chat";
 import { askCampusAI } from "@/lib/groq-ai";
 import {
@@ -352,19 +353,29 @@ function ChatPage() {
 
   useEffect(() => {
     if (!user?.uid) return;
-    void fetchUserChatThreads(user.uid).then((loadedThreads) => {
-      setThreads((current) => {
-        const map = new Map<string, ChatThread>();
-        if (targetPeerThread) {
-          map.set(targetPeerThread.id, targetPeerThread);
-        }
-        loadedThreads.forEach((t) => map.set(t.id, t));
-        current.forEach((t) => {
-          if (!map.has(t.id)) map.set(t.id, t);
+
+    const reloadThreads = () => {
+      void fetchUserChatThreads(user.uid).then((loadedThreads) => {
+        setThreads((current) => {
+          const map = new Map<string, ChatThread>();
+          if (targetPeerThread) {
+            map.set(targetPeerThread.id, targetPeerThread);
+          }
+          loadedThreads.forEach((t) => map.set(t.id, t));
+          current.forEach((t) => {
+            if (!map.has(t.id)) map.set(t.id, t);
+          });
+          return Array.from(map.values());
         });
-        return Array.from(map.values());
       });
+    };
+
+    reloadThreads();
+    const unsub = subscribeToUserNewMessages(user.uid, () => {
+      reloadThreads();
     });
+
+    return unsub;
   }, [user?.uid, targetPeerThread]);
 
   useEffect(() => {

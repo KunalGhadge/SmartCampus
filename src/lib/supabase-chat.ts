@@ -198,6 +198,8 @@ export function subscribeToSupabasePresence(
   };
 }
 
+import { SEEDED_CAMPUS_PEERS } from "./supabase-data";
+
 export async function fetchUserChatThreads(currentUserId: string): Promise<ChatThread[]> {
   const baseThreads: ChatThread[] = [AI_ASSISTANT_THREAD];
   if (!isSupabaseConfigured || !currentUserId) return baseThreads;
@@ -223,21 +225,67 @@ export async function fetchUserChatThreads(currentUserId: string): Promise<ChatT
       }
     });
 
+    const peerIds = new Set<string>();
+    for (const [tId, lastRow] of threadMap.entries()) {
+      const parts = tId.replace("dm_", "").split("_");
+      const peerId = parts.find((p) => p !== currentUserId) || lastRow.sender_id;
+      if (peerId) peerIds.add(peerId);
+    }
+
+    const profilesMap = new Map<string, { name: string; avatar: string }>();
+    SEEDED_CAMPUS_PEERS.forEach((seed) => {
+      profilesMap.set(seed.firebaseUid, {
+        name: seed.displayName,
+        avatar: seed.photoUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(seed.displayName)}`,
+      });
+    });
+
+    if (peerIds.size > 0) {
+      try {
+        const { data: profData } = await supabase
+          .from("profiles")
+          .select("id, display_name, full_name, avatar_url")
+          .in("id", Array.from(peerIds));
+
+        if (profData) {
+          profData.forEach((p) => {
+            const name = p.display_name || p.full_name || "Campus Student";
+            profilesMap.set(p.id, {
+              name,
+              avatar:
+                p.avatar_url ||
+                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name || p.id)}`,
+            });
+          });
+        }
+      } catch (err) {
+        console.warn("Profiles lookup for chat threads:", err);
+      }
+    }
+
     const parsedThreads: ChatThread[] = [];
     for (const [tId, lastRow] of threadMap.entries()) {
       const parts = tId.replace("dm_", "").split("_");
       const peerId = parts.find((p) => p !== currentUserId) || lastRow.sender_id;
       const isSender = lastRow.sender_id === currentUserId;
 
+      const profile = profilesMap.get(peerId);
+      const displayName =
+        profile?.name ||
+        (!isSender && lastRow.sender_name ? lastRow.sender_name : "Campus Student");
+      const avatar =
+        profile?.avatar ||
+        (!isSender && lastRow.sender_avatar
+          ? lastRow.sender_avatar
+          : `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName || peerId)}`);
+
       const date = new Date(lastRow.created_at);
       const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
       parsedThreads.push({
         id: tId,
-        name: isSender ? "Campus Student" : (lastRow.sender_name || "Campus Student"),
-        avatar:
-          lastRow.sender_avatar ||
-          `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(peerId)}`,
+        name: displayName,
+        avatar,
         product: "Direct message",
         online: true,
         lastMsg: lastRow.text,
@@ -250,4 +298,40 @@ export async function fetchUserChatThreads(currentUserId: string): Promise<ChatT
   } catch {
     return baseThreads;
   }
+}
+
+export function subscribeToUserNewMessages(
+  currentUserId: string,
+  onNewMessage: () => void,
+) {
+  if (!isSupabaseConfigured || !currentUserId) {
+    return () => {};
+  }
+
+  const channel = supabase
+    .channel("realtime:all-user-messages")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+      },
+      (payload) => {
+        if (payload.new) {
+          const newRow = payload.new as SupabaseMessageRow;
+          if (
+            newRow.thread_id.includes(currentUserId) ||
+            newRow.sender_id === currentUserId
+          ) {
+            onNewMessage();
+          }
+        }
+      },
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }
