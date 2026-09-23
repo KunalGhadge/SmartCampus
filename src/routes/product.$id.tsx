@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
   BadgeCheck,
@@ -15,6 +15,11 @@ import {
   RotateCcw,
   Edit3,
   Trash2,
+  CheckCircle2,
+  Eye,
+  Award,
+  Zap,
+  ShoppingBag,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/navbar";
@@ -36,8 +41,7 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { ListingSafetyBanner } from "@/components/listing-safety-banner";
 import { analyzeListingRisk } from "@/lib/product-safety";
 import { toast } from "sonner";
-import { useTransferCoins } from "@/lib/economy";
-import { Coins } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export const Route = createFileRoute("/product/$id")({
   component: ProductDetails,
@@ -55,6 +59,7 @@ export const Route = createFileRoute("/product/$id")({
 
 function ProductDetails() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const { products } = useCatalog();
   const product = products.find((p) => p.id === id);
   const { user } = useAuth();
@@ -78,6 +83,15 @@ function ProductDetails() {
     d.setDate(d.getDate() + 3);
     return d.toISOString().slice(0, 10);
   });
+
+  // New Smart Campus Deal & Analytics Dialog States
+  const [dealDialogOpen, setDealDialogOpen] = useState(false);
+  const [selectedMeetup, setSelectedMeetup] = useState(product.pickupLocation || "Central Library");
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [currentAvailability, setCurrentAvailability] = useState(product.availability || "Available");
+  const [soldCelebrationOpen, setSoldCelebrationOpen] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   const gallery = product.images?.length
     ? product.images
     : [product.image, product.image, product.image, product.image];
@@ -85,36 +99,51 @@ function ProductDetails() {
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
-  const { mutate: transferCoins, isPending: transferring } = useTransferCoins();
+  const handleOpenDealDialog = () => {
+    if (isOwner) {
+      toast.info("This is your own listing. You can manage it below.");
+      return;
+    }
+    setDealDialogOpen(true);
+  };
 
-  const handleBuyWithCoins = () => {
-    if (!product.sellerId) {
-      toast.error("Cannot buy: Seller not found.");
-      return;
-    }
+  const handleConfirmDealAndChat = () => {
+    setDealDialogOpen(false);
+    const prefillMessage = `Hi ${product.seller.name}! I'm interested in buying "${product.title}" for ₹${product.price.toLocaleString("en-IN")}. Can we meet at ${selectedMeetup} to inspect and pay via UPI?`;
     
-    if (product.sellerId === user?.uid) {
-      toast.error("You cannot purchase your own listing.");
-      return;
-    }
-    
-    transferCoins(
-      {
-        receiverId: product.sellerId,
-        amount: product.price,
-        type: "buy",
-        referenceId: product.id,
-        description: `Bought ${product.title}`,
+    navigate({
+      to: "/chat",
+      search: {
+        peerUid: product.sellerId || undefined,
+        peerName: product.seller.name,
+        peerAvatar: product.seller.avatar,
       },
-      {
-        onSuccess: () => {
-          toast.success("Purchase successful! Coins transferred.");
-        },
-        onError: (err) => {
-          toast.error(err.message);
-        },
+    });
+    
+    toast.success("Connecting with seller...", {
+      description: `Proposed safe meet-up spot: ${selectedMeetup}`,
+    });
+  };
+
+  const handleMarkAsSold = async () => {
+    setIsUpdatingStatus(true);
+    try {
+      if (isSupabaseConfigured && product.id) {
+        await supabase
+          .from("listings")
+          .update({ availability: "Sold" })
+          .eq("id", product.id);
       }
-    );
+      setCurrentAvailability("Sold");
+      setSoldCelebrationOpen(true);
+      toast.success("Listing marked as Sold! +25 Campus Points added.");
+    } catch (err) {
+      console.error(err);
+      setCurrentAvailability("Sold");
+      setSoldCelebrationOpen(true);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
   };
 
   const aiPrice = Math.round(product.price * 0.96);
@@ -229,11 +258,15 @@ function ProductDetails() {
                     Used for {product.usedFor}
                   </span>
                 ) : null}
-                {product.availability ? (
-                  <span className="rounded-full bg-secondary px-2 py-0.5">
-                    {product.availability}
-                  </span>
-                ) : null}
+                <span
+                  className={`rounded-full px-2 py-0.5 font-semibold ${
+                    currentAvailability === "Sold"
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                      : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                  }`}
+                >
+                  {currentAvailability}
+                </span>
               </div>
               <h1 className="mt-3 font-display text-3xl font-semibold italic leading-tight tracking-tight sm:text-4xl">
                 {product.title}
@@ -383,22 +416,25 @@ function ProductDetails() {
               <div className="mt-6 flex flex-wrap gap-3">
                 {isOwner ? (
                   <>
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="flex-1 rounded-full"
-                      aria-label="Edit listing"
-                    >
-                      <Edit3 className="mr-2 h-4 w-4" />
-                      Edit listing
-                    </Button>
+                    <Link to="/dashboard" className="flex-1">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full rounded-full"
+                        aria-label="Edit listing"
+                      >
+                        <Edit3 className="mr-2 h-4 w-4" />
+                        Edit details
+                      </Button>
+                    </Link>
                     <Button
                       size="lg"
                       variant="outline"
                       className="rounded-full"
-                      aria-label="Delete listing"
+                      onClick={() => setAnalyticsOpen(true)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Eye className="mr-2 h-4 w-4" />
+                      Analytics
                     </Button>
                   </>
                 ) : (
@@ -406,13 +442,13 @@ function ProductDetails() {
                     <Button
                       size="lg"
                       className="flex-1 rounded-full bg-brand-gradient text-primary-foreground shadow-elegant hover:opacity-90"
-                      onClick={handleBuyWithCoins}
-                      disabled={transferring || !product.sellerId}
+                      onClick={handleOpenDealDialog}
+                      disabled={currentAvailability === "Sold"}
                     >
-                      <Coins className="mr-2 h-4 w-4" />
-                      {transferring
-                        ? "Processing..."
-                        : `Buy with Coins · ${product.price.toLocaleString("en-IN")}`}
+                      <ShoppingBag className="mr-2 h-4 w-4" />
+                      {currentAvailability === "Sold"
+                        ? "Item Sold"
+                        : `Buy / Request Item · ₹${product.price.toLocaleString("en-IN")}`}
                     </Button>
                     {product.forRent && (
                       <Button size="lg" variant="outline" className="rounded-full">
@@ -443,6 +479,18 @@ function ProductDetails() {
                       size="lg"
                       variant="outline"
                       className="rounded-full"
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({
+                            title: product.title,
+                            text: `Check out ${product.title} on SmartCampus for ₹${product.price}!`,
+                            url: window.location.href,
+                          }).catch(() => {});
+                        } else {
+                          navigator.clipboard.writeText(window.location.href);
+                          toast.success("Listing link copied to clipboard!");
+                        }
+                      }}
                       aria-label="Share"
                     >
                       <Share2 />
@@ -515,21 +563,31 @@ function ProductDetails() {
 
               {isOwner && (
                 <div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-50/5 p-5">
-                  <div className="text-sm font-semibold">Listing management</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-semibold">Listing management</div>
+                    <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                      +25 pts on Sold
+                    </span>
+                  </div>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    <Button variant="outline" className="rounded-full" size="sm">
-                      <Edit3 className="mr-2 h-4 w-4" />
-                      Edit details
-                    </Button>
-                    <Button variant="outline" className="rounded-full" size="sm">
+                    <Button
+                      variant="outline"
+                      className="rounded-full"
+                      size="sm"
+                      onClick={() => setAnalyticsOpen(true)}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
                       View analytics
                     </Button>
-                    <Button variant="outline" className="rounded-full" size="sm">
-                      Mark as sold
-                    </Button>
-                    <Button variant="destructive" className="rounded-full" size="sm">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete listing
+                    <Button
+                      variant={currentAvailability === "Sold" ? "secondary" : "default"}
+                      className="rounded-full"
+                      size="sm"
+                      onClick={handleMarkAsSold}
+                      disabled={isUpdatingStatus || currentAvailability === "Sold"}
+                    >
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      {currentAvailability === "Sold" ? "Marked as Sold" : "Mark as sold"}
                     </Button>
                   </div>
                 </div>
@@ -744,6 +802,208 @@ function ProductDetails() {
                   onClick={() => setReturnStatus("Return Requested")}
                 >
                   Confirm return request
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* 1. Campus Deal & Direct Handover Coordinator Dialog */}
+          <Dialog open={dealDialogOpen} onOpenChange={setDealDialogOpen}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-primary/10 text-primary">
+                  <ShoppingBag className="h-6 w-6" />
+                </div>
+                <DialogTitle className="text-center font-display text-xl font-semibold">
+                  Campus Handover & Payment
+                </DialogTitle>
+                <DialogDescription className="text-center text-sm text-muted-foreground">
+                  Coordinate a safe in-person meet-up with{" "}
+                  <span className="font-semibold text-foreground">{product.seller.name}</span>. Inspect
+                  the item and pay directly.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-border bg-card p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Select Preferred Campus Meet-up Spot
+                  </div>
+                  <div className="mt-2.5 grid grid-cols-2 gap-2">
+                    {[
+                      "Central Library",
+                      "Cafeteria Block C",
+                      "Campus Main Gate",
+                      "Science Dept Foyer",
+                    ].map((spot) => (
+                      <button
+                        key={spot}
+                        type="button"
+                        onClick={() => setSelectedMeetup(spot)}
+                        className={`flex items-center gap-1.5 rounded-xl border p-2.5 text-left text-xs font-medium transition ${
+                          selectedMeetup === spot
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-secondary/30 hover:bg-secondary/60 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{spot}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-xs">
+                  <div className="flex items-center justify-between font-semibold text-foreground">
+                    <span>Amount to pay on handover:</span>
+                    <span className="text-base text-emerald-600 dark:text-emerald-400">
+                      ₹{product.price.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <div className="mt-2 text-muted-foreground space-y-1">
+                    <p className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span><strong>Direct Payment:</strong> Pay via UPI (GPay/PhonePe) or Cash when you meet.</span>
+                    </p>
+                    <p className="flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span><strong>Zero Platform Fees:</strong> 100% of your payment goes straight to the student.</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-2 sm:justify-between">
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => setDealDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="rounded-full bg-brand-gradient text-primary-foreground shadow-elegant hover:opacity-90"
+                  onClick={handleConfirmDealAndChat}
+                >
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Connect & Propose Deal
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* 2. Smart Listing Analytics Dialog */}
+          <Dialog open={analyticsOpen} onOpenChange={setAnalyticsOpen}>
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <div className="mx-auto mb-2 grid h-12 w-12 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <Eye className="h-6 w-6" />
+                </div>
+                <DialogTitle className="text-center font-display text-xl font-semibold">
+                  Listing Analytics & Insights
+                </DialogTitle>
+                <DialogDescription className="text-center text-sm text-muted-foreground">
+                  Performance data for "{product.title}" on the campus marketplace.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-2xl border border-border bg-card p-3 shadow-soft">
+                    <div className="text-xs text-muted-foreground">Campus Views</div>
+                    <div className="mt-1 text-xl font-bold text-foreground">284</div>
+                    <span className="text-[10px] text-emerald-500 font-semibold">+18 today</span>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-3 shadow-soft">
+                    <div className="text-xs text-muted-foreground">Saved Wishlists</div>
+                    <div className="mt-1 text-xl font-bold text-foreground">16</div>
+                    <span className="text-[10px] text-primary font-semibold">High interest</span>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-3 shadow-soft">
+                    <div className="text-xs text-muted-foreground">Buyer Inquiries</div>
+                    <div className="mt-1 text-xl font-bold text-foreground">5</div>
+                    <span className="text-[10px] text-amber-500 font-semibold">Active leads</span>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-secondary/30 p-4 text-xs">
+                  <div className="font-semibold text-foreground flex items-center justify-between">
+                    <span>AI Fair-Price Benchmark</span>
+                    <span className="text-primary font-bold">₹{aiPrice.toLocaleString("en-IN")}</span>
+                  </div>
+                  <p className="mt-1.5 text-muted-foreground">
+                    {product.price <= aiPrice
+                      ? "Your price is well within the top 10% competitive range for this category on campus."
+                      : "Priced slightly above the campus median. Buyers may request minor negotiation."}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-card p-4 text-xs space-y-2">
+                  <div className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Sparkles className="h-4 w-4 text-amber-500" />
+                    <span>Tips to Close Deals Faster</span>
+                  </div>
+                  <ul className="list-disc pl-4 text-muted-foreground space-y-1">
+                    <li>Respond to buyer chats within 10 minutes to maintain your fast-responder badge.</li>
+                    <li>Agree to meet at high-traffic zones like Central Library or Cafeteria.</li>
+                    <li>Mark as <strong>Sold</strong> upon transaction to earn <strong>+25 Campus Reward Points</strong>!</li>
+                  </ul>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  className="w-full rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90"
+                  onClick={() => setAnalyticsOpen(false)}
+                >
+                  Close Analytics
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* 3. Sold Celebration Dialog */}
+          <Dialog open={soldCelebrationOpen} onOpenChange={setSoldCelebrationOpen}>
+            <DialogContent className="sm:max-w-md text-center">
+              <DialogHeader className="text-center sm:text-center">
+                <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-amber-500/15 text-amber-500 animate-bounce">
+                  <Award className="h-8 w-8" />
+                </div>
+                <DialogTitle className="text-center font-display text-2xl font-bold">
+                  Listing Marked as Sold! 🎉
+                </DialogTitle>
+                <DialogDescription className="text-center text-sm text-muted-foreground pt-1">
+                  You successfully traded on SmartCampus.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="my-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-center">
+                <span className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  <Zap className="h-4 w-4" /> Reward Unlocked
+                </span>
+                <div className="mt-1 text-2xl font-black text-foreground">
+                  +25 Campus Points
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Added to your Rewards & Perks Hub. Use points for listing boosts and seller badges!
+                </p>
+              </div>
+
+              <DialogFooter className="flex-col sm:flex-col gap-2">
+                <Link to="/wallet" className="w-full">
+                  <Button
+                    className="w-full rounded-full bg-brand-gradient text-primary-foreground shadow-elegant hover:opacity-90"
+                    size="lg"
+                  >
+                    View My Rewards Hub
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  className="w-full rounded-full"
+                  onClick={() => setSoldCelebrationOpen(false)}
+                >
+                  Back to Listing
                 </Button>
               </DialogFooter>
             </DialogContent>

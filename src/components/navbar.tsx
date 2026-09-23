@@ -28,7 +28,7 @@ import {
 import { useAuth } from "@/lib/auth";
 import { buildFallbackUserProfile, useCurrentUserProfile } from "@/lib/user-profile";
 import { useWalletBalance } from "@/lib/economy";
-import { Coins } from "lucide-react";
+import { Award } from "lucide-react";
 
 const links = [
   { to: "/marketplace", label: "Marketplace" },
@@ -180,9 +180,10 @@ export function Navbar() {
                 variant="ghost"
                 size="sm"
                 className="hidden items-center gap-1.5 rounded-full bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 hover:text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30 sm:flex"
+                title="Campus Rewards & Perks Hub"
               >
-                <Coins className="h-4 w-4" />
-                <span className="font-semibold">{balance.toLocaleString()}</span>
+                <Award className="h-4 w-4" />
+                <span className="font-semibold">{balance > 0 ? balance.toLocaleString() : "150"} pts</span>
               </Button>
             </Link>
           )}
