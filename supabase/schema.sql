@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SmartCampus Supabase Database Schema (Production Ready)
+-- SmartCampus Supabase Database Schema (Production Ready & Auto-Migrating)
 -- Run this SQL in your Supabase Project: SQL Editor -> New Query -> Run
 -- ==============================================================================
 
@@ -26,6 +26,22 @@ create table if not exists public.profiles (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+-- Ensure all columns exist if table was already created in earlier version
+alter table public.profiles add column if not exists email text;
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists display_name text;
+alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists college text default 'MGM College';
+alter table public.profiles add column if not exists campus text default 'MGM College';
+alter table public.profiles add column if not exists department text default 'General';
+alter table public.profiles add column if not exists graduation_year text;
+alter table public.profiles add column if not exists verified boolean default true;
+alter table public.profiles add column if not exists email_verified boolean default true;
+alter table public.profiles add column if not exists trust_score integer default 95;
+alter table public.profiles add column if not exists badges text[] default array['Student', 'Verified Campus Member']::text[];
+alter table public.profiles add column if not exists created_at timestamptz default now();
+alter table public.profiles add column if not exists updated_at timestamptz default now();
 
 alter table public.profiles enable row level security;
 
@@ -107,6 +123,14 @@ create table if not exists public.listings (
   updated_at timestamptz default now()
 );
 
+-- Ensure listings columns exist
+alter table public.listings add column if not exists seller_id text;
+alter table public.listings add column if not exists seller_name text default 'Student';
+alter table public.listings add column if not exists seller_college text default 'MGM College';
+alter table public.listings add column if not exists seller_avatar text;
+alter table public.listings add column if not exists seller_verified boolean default true;
+alter table public.listings add column if not exists seller_rating numeric default 5.0;
+
 alter table public.listings enable row level security;
 
 drop policy if exists "Active listings are viewable by everyone." on public.listings;
@@ -150,6 +174,12 @@ create table if not exists public.item_requests (
   author_id text,
   created_at timestamptz default now()
 );
+
+-- Ensure item_requests columns exist
+alter table public.item_requests add column if not exists author_id text;
+alter table public.item_requests add column if not exists student_name text default 'Student';
+alter table public.item_requests add column if not exists student_avatar text;
+alter table public.item_requests add column if not exists student_verified boolean default true;
 
 alter table public.item_requests enable row level security;
 
@@ -214,6 +244,12 @@ create table if not exists public.messages (
   created_at timestamptz default now()
 );
 
+-- Ensure messages columns exist
+alter table public.messages add column if not exists sender_name text default 'Student';
+alter table public.messages add column if not exists sender_avatar text;
+alter table public.messages add column if not exists image_url text;
+alter table public.messages add column if not exists file_url text;
+
 alter table public.messages enable row level security;
 
 drop policy if exists "Messages in thread are viewable by everyone." on public.messages;
@@ -226,7 +262,7 @@ create policy "Authenticated users can send messages."
   on public.messages for insert
   with check ( true );
 
--- Enable Realtime publication for messages, listings, item requests, and profiles (Safe / Idempotent)
+-- Enable Realtime publication safely (idempotent DO block)
 do $$
 begin
   if not exists (
