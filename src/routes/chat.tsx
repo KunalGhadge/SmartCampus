@@ -861,7 +861,22 @@ function ChatPage() {
                   {["Today, 5 PM", "Tomorrow, 11 AM", "Sat, 2 PM", "Custom…"].map((t) => (
                     <button
                       key={t}
-                      className="rounded-lg border border-border bg-background px-3 py-2 text-left hover:bg-secondary"
+                      type="button"
+                      onClick={() => {
+                        if (t === "Custom…") {
+                          setText(
+                            (curr) =>
+                              curr
+                                ? `${curr} Let's meet at Central Library entrance. What time works best for you?`
+                                : "Let's meet at Central Library entrance. What time works best for you?",
+                          );
+                        } else {
+                          setText(
+                            `Hi ${active.name}! Can we meet ${t} at Central Library entrance to inspect and pay?`,
+                          );
+                        }
+                      }}
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-left hover:bg-secondary transition"
                     >
                       {t}
                     </button>
@@ -879,27 +894,10 @@ function ChatPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (socketStatus.connected) send();
+                send();
               }}
-              className={cn("border-t border-border p-3", !socketStatus.connected && "opacity-60")}>
-              {!socketStatus.connected && (
-                <div className="mb-3 flex items-center justify-center gap-2 rounded-lg bg-muted/50 p-2 text-center text-xs text-muted-foreground">
-                  {socketStatus.connecting ? (
-                    <>
-                      <motion.span
-                        className="inline-block h-1.5 w-1.5 rounded-full bg-primary"
-                        animate={{ scale: [1, 1.3, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity }}
-                      />
-                      Reconnecting...
-                    </>
-                  ) : (
-                    <>
-                      <span>⚠️ Messages are offline</span>
-                    </>
-                  )}
-                </div>
-              )}
+              className="border-t border-border p-3"
+            >
               {replyTo || editingId ? (
                 <div className="mb-2 flex items-center justify-between rounded-2xl border border-border bg-card px-3 py-2">
                   <div className="min-w-0">
@@ -1033,16 +1031,11 @@ function ChatPage() {
                   <textarea
                     value={text}
                     onChange={(e) => setText(e.target.value)}
-                    disabled={!socketStatus.connected}
                     rows={1}
-                    placeholder={
-                      !socketStatus.connected
-                        ? "Waiting for connection..."
-                        : "Write a message…"
-                    }
-                    className="max-h-28 w-full resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground disabled:opacity-50"
+                    placeholder={`Message ${active.name}… (Enter to send, Shift+Enter for newline)`}
+                    className="max-h-28 w-full resize-none bg-transparent px-2 py-2 text-sm outline-none placeholder:text-muted-foreground"
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey && socketStatus.connected) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         send();
                       }
@@ -1098,8 +1091,8 @@ function ChatPage() {
                   <Button
                     size="icon"
                     type="submit"
-                    disabled={!socketStatus.connected}
-                    className="rounded-2xl bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={!text.trim() && pending.length === 0}
+                    className="rounded-2xl bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90 disabled:opacity-40"
                     aria-label="Send message"
                   >
                     <Send className="h-4 w-4" />
