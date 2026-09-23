@@ -43,6 +43,9 @@ alter table public.profiles add column if not exists badges text[] default array
 alter table public.profiles add column if not exists created_at timestamptz default now();
 alter table public.profiles add column if not exists updated_at timestamptz default now();
 
+-- Drop strict foreign key constraint to auth.users if it exists from earlier versions
+alter table public.profiles drop constraint if exists profiles_id_fkey;
+
 alter table public.profiles enable row level security;
 
 drop policy if exists "Public profiles are viewable by everyone." on public.profiles;
@@ -131,6 +134,9 @@ alter table public.listings add column if not exists seller_avatar text;
 alter table public.listings add column if not exists seller_verified boolean default true;
 alter table public.listings add column if not exists seller_rating numeric default 5.0;
 
+-- Drop foreign key constraint on seller_id if exists
+alter table public.listings drop constraint if exists listings_seller_id_fkey;
+
 alter table public.listings enable row level security;
 
 drop policy if exists "Active listings are viewable by everyone." on public.listings;
@@ -181,6 +187,9 @@ alter table public.item_requests add column if not exists student_name text defa
 alter table public.item_requests add column if not exists student_avatar text;
 alter table public.item_requests add column if not exists student_verified boolean default true;
 
+-- Drop foreign key constraint on author_id if exists
+alter table public.item_requests drop constraint if exists item_requests_author_id_fkey;
+
 alter table public.item_requests enable row level security;
 
 drop policy if exists "Item requests are viewable by everyone." on public.item_requests;
@@ -215,6 +224,10 @@ create table if not exists public.reviews (
   comment text default '',
   created_at timestamptz default now()
 );
+
+-- Drop foreign key constraints on reviews if exists
+alter table public.reviews drop constraint if exists reviews_reviewer_id_fkey;
+alter table public.reviews drop constraint if exists reviews_target_user_id_fkey;
 
 alter table public.reviews enable row level security;
 
