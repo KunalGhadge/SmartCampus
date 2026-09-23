@@ -33,3 +33,8 @@ dist-ssr
 .env
 dist/
 docs/
+
+# Antigravity agent local customizations & brag outputs
+.agents/
+brag-output/
+brag-output*/
