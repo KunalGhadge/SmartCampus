@@ -62,11 +62,27 @@ export const Route = createFileRoute("/product/$id")({
 function ProductDetails() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { products } = useCatalog();
+  const { products, loading: catalogLoading } = useCatalog();
   const product = products.find((p) => p.id === id);
   const { user } = useAuth();
   
-  if (!product) throw notFound();
+  if (!product) {
+    if (catalogLoading) {
+      return (
+        <div className="flex min-h-screen flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 flex items-center justify-center p-8">
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              <p className="text-sm text-muted-foreground">Loading listing details…</p>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      );
+    }
+    throw notFound();
+  }
   
   const isOwner = user?.uid && product.sellerId === user.uid;
   const isDemo = isDemoListing(product);

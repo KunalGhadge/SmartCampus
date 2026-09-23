@@ -142,7 +142,7 @@ function ChatPage() {
   });
   const [activeId, setActiveId] = useState(() => targetPeerThread?.id || AI_ASSISTANT_THREAD.id);
   const [showThread, setShowThread] = useState(() => Boolean(targetPeerThread));
-  const active = threads.find((c) => c.id === activeId) ?? targetPeerThread ?? threads[0];
+  const active = threads.find((c) => c.id === activeId) ?? targetPeerThread ?? threads[0] ?? AI_ASSISTANT_THREAD;
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isAutoScrollRef = useRef(true);
