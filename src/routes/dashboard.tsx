@@ -10,6 +10,7 @@ import {
   BadgeCheck,
   RotateCcw,
   CalendarDays,
+  Edit3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { type Category, type Product } from "@/lib/mock-data";
@@ -34,6 +35,7 @@ import { fetchUserChatThreads } from "@/lib/supabase-chat";
 import type { ChatThread } from "@/lib/chat-socket";
 import { getUserRentals, saveUserRentals, requestRentalReturn, type CampusRental } from "@/lib/rentals";
 import AccountOverview from "@/components/account-overview";
+import { EditProfileModal } from "@/components/edit-profile-modal";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({ component: DashboardPage });
@@ -68,6 +70,7 @@ function DashboardPage() {
   });
 
   const [listingOpen, setListingOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [listingSubmitting, setListingSubmitting] = useState(false);
   const [listingForm, setListingForm] = useState({
     title: "",
@@ -237,6 +240,13 @@ function DashboardPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                className="rounded-full flex items-center gap-1.5"
+                onClick={() => setEditProfileOpen(true)}
+              >
+                <Edit3 className="h-4 w-4 text-primary" /> Edit profile
+              </Button>
               <Link to="/marketplace">
                 <Button variant="outline" className="rounded-full">
                   Browse marketplace
@@ -842,6 +852,7 @@ function DashboardPage() {
           </section>
         </div>
       </main>
+      <EditProfileModal open={editProfileOpen} onOpenChange={setEditProfileOpen} />
       <Footer />
     </div>
   );

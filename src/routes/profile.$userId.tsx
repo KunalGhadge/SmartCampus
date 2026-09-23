@@ -126,11 +126,16 @@ function PublicProfilePage() {
                           Chat on campus
                         </Button>
                       </Link>
+                    ) : chatDisabledReason === "self" ? (
+                      <Link to="/dashboard">
+                        <Button className="w-full rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90">
+                          Go to Dashboard to edit profile
+                        </Button>
+                      </Link>
                     ) : (
                       <Button
                         className="w-full rounded-full"
                         variant="secondary"
-                        disabled={chatDisabledReason === "self"}
                         onClick={() => {
                           if (chatDisabledReason === "sign-in") {
                             toast.message("Sign in to chat", {
@@ -140,9 +145,7 @@ function PublicProfilePage() {
                         }}
                       >
                         <MessageCircle className="mr-2 h-4 w-4" />
-                        {chatDisabledReason === "self"
-                          ? "This is you"
-                          : "Sign in to chat"}
+                        Sign in to chat
                       </Button>
                     )}
                     <Link to="/marketplace">
