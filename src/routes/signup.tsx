@@ -21,7 +21,7 @@ export const Route = createFileRoute("/signup")({ component: SignupPage });
 
 function SignupPage() {
   const navigate = useNavigate();
-  useRedirectAuthenticated("/dashboard");
+  useRedirectAuthenticated("/marketplace");
   const [show, setShow] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -46,7 +46,7 @@ function SignupPage() {
         });
       } else {
         toast.success("Account created successfully.");
-        navigate({ to: "/dashboard" });
+        navigate({ to: "/marketplace" });
       }
     } catch (authError) {
       setError(formatAuthErrorMessage(authError));

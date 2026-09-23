@@ -13,7 +13,7 @@ export const Route = createFileRoute("/login")({ component: LoginPage });
 
 function LoginPage() {
   const navigate = useNavigate();
-  useRedirectAuthenticated("/dashboard");
+  useRedirectAuthenticated("/marketplace");
   const [show, setShow] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +28,7 @@ function LoginPage() {
     try {
       await loginWithEmail(email, password);
       toast.success("Signed in successfully.");
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/marketplace" });
     } catch (authError) {
       setError(formatAuthErrorMessage(authError));
     } finally {

@@ -81,7 +81,7 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2.5 group">
+        <Link to={isSignedIn ? "/marketplace" : "/"} className="flex items-center gap-2.5 group">
           <div className="grid h-8 w-8 place-items-center rounded-xl bg-brand-gradient text-primary-foreground shadow-elegant transition-transform duration-200 group-hover:scale-105">
             <ShoppingBag className="h-4 w-4" />
           </div>

@@ -47,6 +47,7 @@ import {
   subscribeToSupabasePresence,
   fetchUserChatThreads,
 } from "@/lib/supabase-chat";
+import { askCampusAI } from "@/lib/groq-ai";
 import {
   getChatSocket,
   useSocketStatus,
@@ -54,6 +55,23 @@ import {
   type ChatMessage,
   type ChatThread,
 } from "@/lib/chat-socket";
+
+const getCachedThreadMessages = (threadId: string): ChatMessage[] => {
+  try {
+    const raw = localStorage.getItem(`smartcampus_thread_msgs_${threadId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveCachedThreadMessages = (threadId: string, msgs: ChatMessage[]) => {
+  try {
+    localStorage.setItem(`smartcampus_thread_msgs_${threadId}`, JSON.stringify(msgs.slice(-100)));
+  } catch {
+    // ignore
+  }
+};
 
 export const Route = createFileRoute("/chat")({
   validateSearch: (search: Record<string, unknown>): {
@@ -83,6 +101,14 @@ function ChatPage() {
   const { user, loading: authLoading } = useRequireAuth("/login");
   const profileQuery = useCurrentUserProfile();
   const profile = profileQuery.data ?? (user ? buildFallbackUserProfile(user) : null);
+  const currentUser = useMemo(
+    () => ({
+      id: profile?.firebaseUid ?? user?.uid ?? "guest",
+      name: profile?.displayName ?? user?.displayName ?? "You",
+      avatar: profile?.photoUrl ?? user?.photoURL ?? null,
+    }),
+    [profile, user],
+  );
   const socketStatus = useSocketStatus();
 
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(() => new Set());
@@ -291,15 +317,6 @@ function ChatPage() {
 
   const messageById = useMemo(() => new Map(messages.map((m) => [m.id, m])), [messages]);
 
-  const currentUser = useMemo(
-    () => ({
-      id: profile?.firebaseUid ?? user?.uid ?? "guest",
-      name: profile?.displayName ?? user?.displayName ?? "You",
-      avatar: profile?.photoUrl ?? user?.photoURL ?? null,
-    }),
-    [profile, user],
-  );
-
   useEffect(() => {
     if (!targetPeerThread) return;
     setThreads((current) => {
@@ -354,27 +371,65 @@ function ChatPage() {
     if (authLoading || !user?.uid) return;
 
     revokeMessagePreviews(messagesRef.current);
-    if (activeId === AI_ASSISTANT_THREAD.id) {
+
+    // 1. Instantly load cached messages for active thread (guarantees zero disappearance)
+    const cached = getCachedThreadMessages(activeId);
+    if (cached.length > 0) {
+      setMessages(cached);
+    } else if (activeId === AI_ASSISTANT_THREAD.id) {
+      const initialAiMsg: ChatMessage = {
+        id: "ai_welcome",
+        threadId: AI_ASSISTANT_THREAD.id,
+        from: "ai",
+        text: "Hi! 👋 I'm your MGM SmartCampus AI Assistant. Ask me about textbook recommendations, fair prices, hostel gear, or campus survival tips!",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        delivery: "delivered",
+        authorId: "smartcampus_ai",
+        authorName: AI_NAME,
+        authorAvatar: AI_AVATAR,
+      };
+      setMessages([initialAiMsg]);
+      saveCachedThreadMessages(AI_ASSISTANT_THREAD.id, [initialAiMsg]);
+    } else {
       setMessages([]);
-      setText("");
-      setEditingId(null);
-      setReplyTo(null);
-      setTyping(false);
-      setPending([]);
+    }
+
+    setText("");
+    setEditingId(null);
+    setReplyTo(null);
+    setTyping(false);
+    setPending((current) => {
+      current.forEach(
+        (attachment) => attachment.previewUrl && URL.revokeObjectURL(attachment.previewUrl),
+      );
+      return [];
+    });
+
+    if (activeId === AI_ASSISTANT_THREAD.id) {
       return;
     }
 
+    // 2. Fetch and merge latest Supabase messages
     let isMounted = true;
     void fetchSupabaseThreadMessages(activeId, user.uid).then((fetched) => {
-      if (isMounted) {
-        setMessages(fetched);
+      if (isMounted && fetched.length > 0) {
+        setMessages((prev) => {
+          const map = new Map<string, ChatMessage>();
+          prev.forEach((m) => map.set(m.id, m));
+          fetched.forEach((m) => map.set(m.id, m));
+          const merged = Array.from(map.values());
+          saveCachedThreadMessages(activeId, merged);
+          return merged;
+        });
       }
     });
 
     const unsubscribe = subscribeToSupabaseThread(activeId, user.uid, (newMsg) => {
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
+        const next = [...prev, newMsg];
+        saveCachedThreadMessages(activeId, next);
+        return next;
       });
       setThreads((prevThreads) =>
         prevThreads.map((t) =>
@@ -386,16 +441,6 @@ function ChatPage() {
     socket.emit("chat:thread:join", {
       threadId: activeId,
       user: currentUser,
-    });
-    setText("");
-    setEditingId(null);
-    setReplyTo(null);
-    setTyping(false);
-    setPending((current) => {
-      current.forEach(
-        (attachment) => attachment.previewUrl && URL.revokeObjectURL(attachment.previewUrl),
-      );
-      return [];
     });
 
     return () => {
@@ -467,11 +512,6 @@ function ChatPage() {
     socket.emit("chat:message:delete", { threadId: activeId, messageId: id, user: currentUser });
 
   const send = async () => {
-    if (activeId === AI_ASSISTANT_THREAD.id) {
-      navigate({ to: "/ai-chat" });
-      return;
-    }
-
     const trimmed = text.trim();
     if (!trimmed && pending.length === 0) return;
 
@@ -482,9 +522,11 @@ function ChatPage() {
         text: trimmed,
         user: currentUser,
       });
-      setMessages((prev) =>
-        prev.map((m) => (m.id === editingId ? { ...m, text: trimmed, edited: true } : m)),
-      );
+      setMessages((prev) => {
+        const next = prev.map((m) => (m.id === editingId ? { ...m, text: trimmed, edited: true } : m));
+        saveCachedThreadMessages(activeId, next);
+        return next;
+      });
       setEditingId(null);
       setText("");
       return;
@@ -516,15 +558,69 @@ function ChatPage() {
       authorId: user?.uid || currentUser.id,
       authorName: currentUser.name,
       authorAvatar: currentUser.avatar,
+      attachments: attachments.length ? attachments : undefined,
     };
 
-    setMessages((prev) => [...prev, optimisticMsg]);
+    const nextMessages = [...messages, optimisticMsg];
+    setMessages(nextMessages);
+    saveCachedThreadMessages(activeId, nextMessages);
+
     setThreads((prev) =>
       prev.map((t) =>
         t.id === activeId ? { ...t, lastMsg: currentText, time: timeNow } : t,
       ),
     );
 
+    // If chatting with AI Assistant
+    if (activeId === AI_ASSISTANT_THREAD.id) {
+      setTyping(true);
+      try {
+        const history = nextMessages.slice(-8).map((m) => ({
+          role: m.from === "ai" ? ("assistant" as const) : ("user" as const),
+          content: m.text,
+        }));
+        const replyText = await askCampusAI(history);
+        const aiMsg: ChatMessage = {
+          id: crypto.randomUUID(),
+          threadId: activeId,
+          from: "ai",
+          text: replyText,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          delivery: "delivered",
+          authorId: "smartcampus_ai",
+          authorName: AI_NAME,
+          authorAvatar: AI_AVATAR,
+        };
+        setMessages((prev) => {
+          const updated = [...prev, aiMsg];
+          saveCachedThreadMessages(activeId, updated);
+          return updated;
+        });
+      } catch (err: any) {
+        const errText = err?.message || "I could not process that right now. Please try again in a moment.";
+        const aiErr: ChatMessage = {
+          id: crypto.randomUUID(),
+          threadId: activeId,
+          from: "ai",
+          text: errText,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          delivery: "delivered",
+          authorId: "smartcampus_ai",
+          authorName: AI_NAME,
+          authorAvatar: AI_AVATAR,
+        };
+        setMessages((prev) => {
+          const updated = [...prev, aiErr];
+          saveCachedThreadMessages(activeId, updated);
+          return updated;
+        });
+      } finally {
+        setTyping(false);
+      }
+      return;
+    }
+
+    // Direct peer chat sync via Supabase & Socket.IO
     try {
       const createdMsg = await sendSupabaseDirectMessage({
         threadId: activeId,
@@ -535,9 +631,11 @@ function ChatPage() {
       });
 
       if (createdMsg) {
-        setMessages((prev) =>
-          prev.map((m) => (m.id === tempId ? createdMsg : m)),
-        );
+        setMessages((prev) => {
+          const updated = prev.map((m) => (m.id === tempId ? createdMsg : m));
+          saveCachedThreadMessages(activeId, updated);
+          return updated;
+        });
       }
 
       if (socket.connected) {

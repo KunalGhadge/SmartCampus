@@ -18,7 +18,7 @@ import {
   GraduationCap,
   IndianRupee,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
@@ -28,6 +28,7 @@ import { testimonials, type ItemRequest } from "@/lib/mock-data";
 import { categorySummaries, useCatalog } from "@/lib/catalog";
 import { useCampusItemRequests } from "@/lib/item-requests-catalog";
 import { RequestItemModal } from "@/components/request-item-modal";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -35,6 +36,19 @@ export const Route = createFileRoute("/")({ component: Landing });
 
 function Landing() {
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate({ to: "/marketplace", replace: true });
+    }
+  }, [user, loading, navigate]);
+
+  if (!loading && user) {
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
