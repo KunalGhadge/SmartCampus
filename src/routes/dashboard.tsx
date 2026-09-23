@@ -34,6 +34,7 @@ import { fetchUserChatThreads } from "@/lib/supabase-chat";
 import type { ChatThread } from "@/lib/chat-socket";
 import { getUserRentals, saveUserRentals, requestRentalReturn, type CampusRental } from "@/lib/rentals";
 import AccountOverview from "@/components/account-overview";
+import { InstagramFollowBanner } from "@/components/instagram-follow-banner";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({ component: DashboardPage });
@@ -288,6 +289,8 @@ function DashboardPage() {
               </motion.div>
             ))}
           </div>
+
+          <InstagramFollowBanner className="mt-8" />
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
             <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">

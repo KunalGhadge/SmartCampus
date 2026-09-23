@@ -4,6 +4,9 @@ import {
   useTransactionHistory,
   saveWalletBalance,
   addWalletTransaction,
+  CAMPUSKART_INSTAGRAM_URL,
+  claimInstagramBonus,
+  isInstagramClaimed,
 } from "@/lib/economy";
 import {
   Sparkles,
@@ -20,6 +23,7 @@ import {
   Tag,
   Star,
   Flame,
+  Instagram,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,12 +50,19 @@ function WalletPage() {
 
   // Local points balance state (initial balance + dynamic rewards)
   const [points, setPoints] = useState<number>(rawBalance);
+  const [igClaimed, setIgClaimed] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof rawBalance === "number") {
       setPoints(rawBalance);
     }
   }, [rawBalance]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      setIgClaimed(isInstagramClaimed(user.uid));
+    }
+  }, [user?.uid]);
 
   const [claimedPerks, setClaimedPerks] = useState<string[]>(() => {
     try {
@@ -98,6 +109,29 @@ function WalletPage() {
     });
   };
 
+  const handleFollowInstagram = async () => {
+    window.open(CAMPUSKART_INSTAGRAM_URL, "_blank", "noopener,noreferrer");
+
+    if (!user?.uid) return;
+    if (igClaimed) {
+      toast.info("Already claimed Instagram bonus", {
+        description: "You've already earned +50 points for following @campuskart.business.",
+      });
+      return;
+    }
+
+    const success = await claimInstagramBonus(user.uid);
+    if (success) {
+      setIgClaimed(true);
+      setPoints((prev) => prev + 50);
+      queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
+      queryClient.invalidateQueries({ queryKey: ["wallet-transactions"] });
+      toast.success("🎉 +50 Points Claimed!", {
+        description: "Thank you for following @campuskart.business on Instagram!",
+      });
+    }
+  };
+
   const handleShareInvite = () => {
     const inviteUrl = window.location.origin;
     if (navigator.clipboard) {
@@ -130,7 +164,7 @@ function WalletPage() {
             Campus Rewards & Perks Hub
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Earn points by trading, verifying, and reviewing on CampusKart. Redeem points for listing boosts and badges!
+            Earn points by trading, verifying, following on Instagram, and reviewing on CampusKart. Redeem points for listing boosts and badges!
           </p>
         </div>
 
@@ -179,6 +213,34 @@ function WalletPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 sm:grid-cols-2">
+              {/* Instagram Follow Reward */}
+              <div className="flex items-start gap-3 rounded-2xl border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-amber-500/10 p-3.5">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] text-white shadow-sm">
+                  <Instagram className="h-5 w-5" />
+                </div>
+                <div className="flex-1 text-xs">
+                  <div className="font-semibold text-foreground flex items-center justify-between">
+                    <span>Follow Instagram</span>
+                    <span className="font-bold text-pink-600 dark:text-pink-400">+50 pts</span>
+                  </div>
+                  <p className="text-muted-foreground mt-0.5">Follow @campuskart.business for campus alerts.</p>
+                  <button
+                    onClick={handleFollowInstagram}
+                    className="text-[11px] font-semibold text-pink-600 dark:text-pink-400 hover:underline mt-1.5 inline-flex items-center gap-1"
+                  >
+                    {igClaimed ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Claimed (+50 pts)
+                      </span>
+                    ) : (
+                      <>
+                        <Instagram className="h-3 w-3" /> Follow & Claim +50 pts <ArrowUpRight className="h-3 w-3" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-secondary/20 p-3.5">
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500">
                   <ShieldCheck className="h-5 w-5" />
@@ -207,22 +269,6 @@ function WalletPage() {
                   <p className="text-muted-foreground mt-0.5">Complete a deal with a fellow student.</p>
                   <Link to="/dashboard" className="text-[11px] font-semibold text-primary hover:underline mt-1 inline-block">
                     Manage My Listings →
-                  </Link>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 rounded-2xl border border-border/60 bg-secondary/20 p-3.5">
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-500">
-                  <Star className="h-5 w-5" />
-                </div>
-                <div className="flex-1 text-xs">
-                  <div className="font-semibold text-foreground flex items-center justify-between">
-                    <span>Leave a Seller Review</span>
-                    <span className="font-bold text-amber-500">+10 pts</span>
-                  </div>
-                  <p className="text-muted-foreground mt-0.5">Rate your experience after a campus meetup.</p>
-                  <Link to="/marketplace" className="text-[11px] font-semibold text-primary hover:underline mt-1 inline-block">
-                    Explore Marketplace →
                   </Link>
                 </div>
               </div>

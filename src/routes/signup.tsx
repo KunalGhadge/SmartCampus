@@ -121,6 +121,21 @@ function SignupPage() {
                     </button>
                   }
                 />
+                <div className="rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-amber-500/10 p-3 text-xs text-foreground flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📸</span>
+                    <span>Follow <strong>@campuskart.business</strong> on IG for <strong>+50 pts</strong></span>
+                  </div>
+                  <a
+                    href="https://www.instagram.com/campuskart.business?stkn=MWx0Nms4c2piaGFhaA=="
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-pink-600 dark:text-pink-400 hover:underline shrink-0"
+                  >
+                    Follow →
+                  </a>
+                </div>
+
                 <div className="rounded-xl border border-border bg-secondary/40 p-3 text-xs text-muted-foreground">
                   <ShieldCheck className="mr-1.5 inline h-3.5 w-3.5 text-foreground" />
                   We&apos;ll send a verification email with a link to activate your account.
@@ -175,6 +190,21 @@ function SignupPage() {
               <li>Once confirmed, you can immediately sign in.</li>
             </ul>
           </div>
+
+          <a
+            href="https://www.instagram.com/campuskart.business?stkn=MWx0Nms4c2piaGFhaA=="
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between rounded-xl border border-pink-500/30 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-amber-500/10 p-3 text-xs font-semibold text-foreground hover:border-pink-500/60 transition"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">📸</span>
+              <span>Follow @campuskart.business on Instagram</span>
+            </div>
+            <span className="rounded-full bg-pink-500/20 px-2 py-0.5 text-[10px] font-bold text-pink-700 dark:text-pink-300">
+              +50 pts bonus
+            </span>
+          </a>
 
           <DialogFooter className="sm:justify-center">
             <Button

@@ -145,6 +145,40 @@ export function useTransactionHistory() {
   });
 }
 
+export const CAMPUSKART_INSTAGRAM_URL =
+  "https://www.instagram.com/campuskart.business?stkn=MWx0Nms4c2piaGFhaA==";
+
+const IG_CLAIM_PREFIX = "campuskart_ig_claimed_";
+
+export function isInstagramClaimed(userId: string): boolean {
+  try {
+    return localStorage.getItem(`${IG_CLAIM_PREFIX}${userId}`) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export async function claimInstagramBonus(userId: string): Promise<boolean> {
+  if (!userId) return false;
+  try {
+    if (isInstagramClaimed(userId)) return false;
+    const current = await fetchWalletBalance(userId);
+    const updated = current + 50;
+    await saveWalletBalance(userId, updated);
+    await addWalletTransaction(userId, {
+      senderId: null,
+      receiverId: userId,
+      amount: 50,
+      type: "bonus",
+      description: "Instagram Follow Bonus · @campuskart.business",
+    });
+    localStorage.setItem(`${IG_CLAIM_PREFIX}${userId}`, "true");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useTransferCoins() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -160,3 +194,4 @@ export function useTransferCoins() {
     },
   });
 }
+

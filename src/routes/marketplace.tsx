@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { type Category } from "@/lib/mock-data";
 import { categorySummaries, useCatalog } from "@/lib/catalog";
 import { RequestItemModal } from "@/components/request-item-modal";
+import { InstagramFollowBanner } from "@/components/instagram-follow-banner";
 import { cn } from "@/lib/utils";
 import { CAMPUSES } from "@/lib/campus";
 
@@ -433,6 +434,7 @@ function MarketplacePage() {
           </aside>
 
           <section>
+            <InstagramFollowBanner className="mb-6" />
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Showing <span className="font-semibold text-foreground">{filtered.length}</span>{" "}

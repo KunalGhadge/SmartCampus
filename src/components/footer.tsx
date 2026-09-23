@@ -25,28 +25,38 @@ export function Footer() {
             The trusted marketplace built exclusively for verified MGM College students. Buy, sell,
             rent, exchange — all within your campus community.
           </p>
-          <div className="mt-6 flex gap-3 text-muted-foreground">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <a
               href="https://www.instagram.com/campuskart.business?stkn=MWx0Nms4c2piaGFhaA=="
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border border-border p-2 transition hover:text-foreground hover:border-primary hover:bg-primary/5"
+              className="inline-flex items-center gap-2 rounded-full border border-pink-500/30 bg-gradient-to-r from-pink-500/15 via-purple-500/15 to-amber-500/15 px-3.5 py-1.5 text-xs font-semibold text-foreground transition-all hover:border-pink-500/60 hover:shadow-sm"
               aria-label="CampusKart Instagram"
             >
-              <Instagram className="h-4 w-4" />
+              <div className="grid h-5 w-5 place-items-center rounded-full bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] text-white">
+                <Instagram className="h-3 w-3" />
+              </div>
+              <span>@campuskart.business</span>
+              <span className="rounded-full bg-pink-500/20 px-1.5 py-0.5 text-[10px] font-bold text-pink-700 dark:text-pink-300">
+                +50 pts
+              </span>
             </a>
-            <a
-              href="#"
-              className="rounded-full border border-border p-2 transition hover:text-foreground"
-            >
-              <Twitter className="h-4 w-4" />
-            </a>
-            <a
-              href="#"
-              className="rounded-full border border-border p-2 transition hover:text-foreground"
-            >
-              <Github className="h-4 w-4" />
-            </a>
+            <div className="flex gap-2 text-muted-foreground">
+              <a
+                href="#"
+                className="rounded-full border border-border p-2 transition hover:text-foreground"
+                aria-label="Twitter"
+              >
+                <Twitter className="h-4 w-4" />
+              </a>
+              <a
+                href="#"
+                className="rounded-full border border-border p-2 transition hover:text-foreground"
+                aria-label="GitHub"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </div>
 
