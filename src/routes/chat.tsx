@@ -56,6 +56,7 @@ import {
   type ChatMessage,
   type ChatThread,
 } from "@/lib/chat-socket";
+import { ChatMarkdown } from "@/components/chat-markdown";
 
 const getCachedThreadMessages = (threadId: string): ChatMessage[] => {
   try {
@@ -957,7 +958,7 @@ function ChatPage() {
                         ) : null}
 
                         {m.text ? (
-                          <div className="whitespace-pre-wrap break-words">{m.text}</div>
+                          <ChatMarkdown content={m.text} isMe={isMe} />
                         ) : null}
 
                         {m.reactions && Object.keys(m.reactions).length ? (

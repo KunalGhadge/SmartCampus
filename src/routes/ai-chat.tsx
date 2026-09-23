@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRequireAuth } from "@/lib/route-auth";
 import { askCampusAI, type ChatMessage } from "@/lib/groq-ai";
+import { ChatMarkdown } from "@/components/chat-markdown";
 
 export const Route = createFileRoute("/ai-chat")({ component: AIChatPage });
 
@@ -172,13 +173,13 @@ function AIChatPage() {
 
                     <div
                       className={cn(
-                        "max-w-xs rounded-lg px-4 py-2 text-sm",
+                        "max-w-md sm:max-w-xl rounded-2xl px-4 py-3 text-sm shadow-sm",
                         msg.sender === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground",
+                          ? "bg-brand-gradient text-primary-foreground"
+                          : "border border-border bg-card text-foreground",
                       )}
                     >
-                      <p>{msg.text}</p>
+                      <ChatMarkdown content={msg.text} isMe={msg.sender === "user"} />
                       <p
                         className={cn(
                           "mt-1 text-xs",

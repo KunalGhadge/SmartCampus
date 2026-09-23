@@ -498,8 +498,28 @@ function ProductDetails() {
                       <ShoppingBag className="mr-2 h-4 w-4" />
                       {currentAvailability === "Sold"
                         ? "Item Sold"
-                        : `Buy / Request Item · ₹${product.price.toLocaleString("en-IN")}`}
+                        : `Buy / Deal · ₹${product.price.toLocaleString("en-IN")}`}
                     </Button>
+                    <Link
+                      to="/chat"
+                      search={{
+                        peerUid: product.sellerId || (isDemo ? `demo_${product.id}` : undefined),
+                        peerName: product.seller.name,
+                        peerAvatar: product.seller.avatar,
+                        product: product.title,
+                        initialMsg: `Hi ${product.seller.name}! Is "${product.title}" still available?`,
+                      }}
+                      className="flex-1 sm:flex-none"
+                    >
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full rounded-full border-primary/30 text-primary hover:bg-primary/10 shadow-soft"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Chat with Seller
+                      </Button>
+                    </Link>
                     {product.forRent && (
                       <Button size="lg" variant="outline" className="rounded-full">
                         Rent · ₹{product.rentPerDay}/day
@@ -1132,7 +1152,7 @@ function ProductDetails() {
           </Dialog>
 
           {/* Similar */}
-          <section className="mt-20">
+          <section className="mt-20 pb-20 lg:pb-0">
             <h2 className="font-display text-2xl font-semibold italic tracking-tight">
               Similar listings
             </h2>
@@ -1143,6 +1163,50 @@ function ProductDetails() {
             </div>
           </section>
         </div>
+
+        {/* Mobile Sticky Bottom Action Bar */}
+        {!isOwner && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/80 bg-background/95 p-3 backdrop-blur-lg shadow-2xl lg:hidden">
+            <div className="mx-auto flex max-w-md items-center justify-between gap-2.5">
+              <div className="min-w-0 flex-1">
+                <div className="text-[11px] text-muted-foreground">Campus Deal</div>
+                <div className="text-lg font-bold text-foreground">
+                  ₹{product.price.toLocaleString("en-IN")}
+                </div>
+              </div>
+
+              <Link
+                to="/chat"
+                search={{
+                  peerUid: product.sellerId || (isDemo ? `demo_${product.id}` : undefined),
+                  peerName: product.seller.name,
+                  peerAvatar: product.seller.avatar,
+                  product: product.title,
+                  initialMsg: `Hi ${product.seller.name}! Is "${product.title}" still available?`,
+                }}
+                className="flex-1"
+              >
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full rounded-full border-primary/40 text-primary font-semibold text-xs shadow-soft"
+                >
+                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Chat
+                </Button>
+              </Link>
+
+              <Button
+                size="sm"
+                className="flex-1 rounded-full bg-brand-gradient text-primary-foreground font-semibold text-xs shadow-soft"
+                onClick={handleOpenDealDialog}
+                disabled={currentAvailability === "Sold"}
+              >
+                <ShoppingBag className="mr-1.5 h-3.5 w-3.5" />
+                {currentAvailability === "Sold" ? "Sold" : "Buy Deal"}
+              </Button>
+            </div>
+          </div>
+        )}
       </main>
       <Footer />
     </div>
