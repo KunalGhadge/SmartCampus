@@ -665,15 +665,18 @@ function ChatPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-hidden bg-background">
       <Navbar />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-0 py-0 sm:px-4 sm:py-6 lg:px-8">
-        <div className="grid h-[calc(100vh-4rem)] overflow-hidden border border-border bg-card sm:h-[calc(100vh-7rem)] sm:rounded-3xl md:grid-cols-[320px_1fr]">
+      <main className="mx-auto w-full max-w-7xl flex-1 min-h-0 overflow-hidden px-0 py-0 sm:px-4 sm:py-4 lg:px-8">
+        <div className="grid h-full min-h-0 overflow-hidden border border-border bg-card sm:rounded-3xl md:grid-cols-[320px_1fr]">
           {/* Sidebar */}
           <aside
-            className={cn("flex flex-col border-r border-border", showThread && "hidden md:flex")}
+            className={cn(
+              "flex h-full min-h-0 flex-col overflow-hidden border-r border-border",
+              showThread && "hidden md:flex",
+            )}
           >
-            <div className="border-b border-border p-4">
+            <div className="shrink-0 border-b border-border p-4">
               <h2 className="text-lg font-semibold">Messages</h2>
               <div className="mt-3 flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
@@ -683,7 +686,7 @@ function ChatPage() {
                 />
               </div>
             </div>
-            <ul className="flex-1 overflow-y-auto">
+            <ul className="flex-1 min-h-0 overflow-y-auto">
               {threads.length === 0 ? (
                 <li className="p-6 text-center text-sm text-muted-foreground">
                   No conversations yet. Messages will appear after a real chat starts.
@@ -739,9 +742,14 @@ function ChatPage() {
           </aside>
 
           {/* Thread */}
-          <section className={cn("relative flex flex-col", !showThread && "hidden md:flex")}>
+          <section
+            className={cn(
+              "relative flex h-full min-h-0 flex-col overflow-hidden",
+              !showThread && "hidden md:flex",
+            )}
+          >
             {/* Supabase Realtime Active Status Banner */}
-            <div className="flex items-center justify-between border-b border-border/40 bg-secondary/30 px-4 py-1.5 text-[11px] font-medium text-muted-foreground">
+            <div className="shrink-0 flex items-center justify-between border-b border-border/40 bg-secondary/30 px-4 py-1.5 text-[11px] font-medium text-muted-foreground">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-foreground font-semibold">Realtime Chat Active</span>
@@ -750,7 +758,7 @@ function ChatPage() {
               <span className="text-[10px] text-muted-foreground/80">⚡ 0ms latency</span>
             </div>
 
-            <header className="flex items-center gap-3 border-b border-border p-4">
+            <header className="shrink-0 flex items-center gap-3 border-b border-border p-4">
               <button onClick={() => setShowThread(false)} className="md:hidden">
                 <ArrowLeft className="h-5 w-5" />
               </button>
@@ -790,7 +798,7 @@ function ChatPage() {
 
             <div
               ref={scrollContainerRef}
-              className="flex-1 space-y-3 overflow-y-auto bg-background/40 p-5"
+              className="flex-1 min-h-0 space-y-3 overflow-y-auto bg-background/40 p-5"
             >
               <div className="mx-auto max-w-md rounded-2xl border border-dashed border-border bg-card p-3 text-center text-xs text-muted-foreground">
                 You're chatting about{" "}
