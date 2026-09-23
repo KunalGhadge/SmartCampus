@@ -354,29 +354,46 @@ function Categories() {
 
 function Featured() {
   const { products } = useCatalog();
+  const [showAllMobile, setShowAllMobile] = useState(false);
+
   return (
-    <section className="relative py-20 overflow-hidden">
+    <section className="relative py-16 sm:py-20 overflow-hidden">
       {/* Warm gradient background */}
       <div className="absolute inset-0 bg-gradient-to-b from-amber-50/20 via-background to-amber-50/50 dark:from-amber-950/10 dark:via-background dark:to-amber-950/20" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.08),transparent_70%)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 flex items-end justify-between">
+        <div className="mb-8 sm:mb-10 flex items-end justify-between">
           <div>
-            <h2 className="font-display text-3xl font-semibold italic tracking-tight sm:text-4xl">
+            <h2 className="font-display text-2xl font-semibold italic tracking-tight sm:text-4xl">
               Trending on campus
             </h2>
-            <p className="mt-2 text-muted-foreground">Hand-picked listings from top sellers.</p>
+            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">Hand-picked listings from top sellers.</p>
           </div>
-          <Link to="/marketplace" className="text-sm font-medium text-primary hover:underline">
+          <Link to="/marketplace" className="text-xs sm:text-sm font-medium text-primary hover:underline">
             View all →
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3 lg:grid-cols-4">
           {products.slice(0, 8).map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
+            <div key={p.id} className={cn(i >= 4 && !showAllMobile && "hidden sm:block")}>
+              <ProductCard product={p} index={i} />
+            </div>
           ))}
         </div>
+
+        {products.length > 4 && (
+          <div className="mt-6 flex justify-center sm:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAllMobile((v) => !v)}
+              className="rounded-full text-xs font-semibold px-5 border-border shadow-soft"
+            >
+              {showAllMobile ? "Show fewer items ↑" : `View more items (${Math.min(products.length, 8) - 4} more) ↓`}
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -385,22 +402,24 @@ function Featured() {
 function RequestedByStudents() {
   const { requests, loading, error } = useCampusItemRequests();
   const [provideFor, setProvideFor] = useState<ItemRequest | null>(null);
+  const [showAllMobile, setShowAllMobile] = useState(false);
+
   return (
-    <section className="relative py-20 overflow-hidden">
+    <section className="relative py-16 sm:py-20 overflow-hidden">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 bg-gradient-to-b from-amber-50/30 via-background to-blue-50/20 dark:from-amber-950/15 dark:via-background dark:to-blue-950/10" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.06),transparent_70%)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 flex items-end justify-between">
+        <div className="mb-8 sm:mb-10 flex items-end justify-between">
           <div>
-            <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+            <span className="mb-1.5 sm:mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-medium text-primary">
               <HandHeart className="h-3 w-3" /> Live requests
             </span>
-            <h2 className="mt-2 font-display text-3xl font-semibold italic tracking-tight sm:text-4xl">
+            <h2 className="mt-1 sm:mt-2 font-display text-2xl font-semibold italic tracking-tight sm:text-4xl">
               Requested by students
             </h2>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-muted-foreground">
               Students are looking for these items right now. Can you help?
             </p>
           </div>
@@ -411,22 +430,36 @@ function RequestedByStudents() {
           </div>
         ) : null}
         {loading && requests.length === 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-56 animate-pulse rounded-2xl border border-border bg-card" />
             ))}
           </div>
         ) : null}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {requests.map((req, i) => (
-            <RequestCard
-              key={req.id}
-              request={req}
-              index={i}
-              onProvide={() => setProvideFor(req)}
-            />
+            <div key={req.id} className={cn(i >= 2 && !showAllMobile && "hidden sm:block")}>
+              <RequestCard
+                request={req}
+                index={i}
+                onProvide={() => setProvideFor(req)}
+              />
+            </div>
           ))}
         </div>
+
+        {requests.length > 2 && (
+          <div className="mt-6 flex justify-center sm:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAllMobile((v) => !v)}
+              className="rounded-full text-xs font-semibold px-5 border-border shadow-soft"
+            >
+              {showAllMobile ? "Show fewer requests ↑" : `View more requests (${requests.length - 2} more) ↓`}
+            </Button>
+          </div>
+        )}
       </div>
 
       <ProvideModal request={provideFor} onClose={() => setProvideFor(null)} />
