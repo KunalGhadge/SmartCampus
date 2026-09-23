@@ -49,11 +49,16 @@ export async function loginWithEmail(email: string, pass: string): Promise<AppAu
   return mapSupabaseUserToAppUser(data.user);
 }
 
+export interface SignupResult {
+  user: AppAuthUser;
+  needsEmailVerification: boolean;
+}
+
 export async function signupWithEmail(
   email: string,
   pass: string,
   displayName?: string,
-): Promise<AppAuthUser> {
+): Promise<SignupResult> {
   const { data, error } = await supabase.auth.signUp({
     email,
     password: pass,
@@ -66,7 +71,13 @@ export async function signupWithEmail(
   });
   if (error) throw error;
   if (!data.user) throw new Error("No user returned from sign up.");
-  return mapSupabaseUserToAppUser(data.user);
+  
+  // If session is null or identities exist with unconfirmed email, verification is required
+  const needsEmailVerification = !data.session;
+  return {
+    user: mapSupabaseUserToAppUser(data.user),
+    needsEmailVerification,
+  };
 }
 
 // Google / Apple OAuth (Temporarily disabled - uncomment when OAuth credentials are ready)

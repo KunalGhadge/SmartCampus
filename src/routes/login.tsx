@@ -79,7 +79,7 @@ function LoginPage() {
             className="w-full max-w-sm"
           >
             <h1 className="font-display text-3xl font-semibold tracking-tight">Welcome back</h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your MGM College SmartCampus account.</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your SmartCampus account.</p>
 
             {/* Google / Apple Auth temporarily commented out
             <div className="mt-7 grid gap-2">
@@ -94,9 +94,9 @@ function LoginPage() {
             <form className="mt-6 space-y-3" onSubmit={handleEmailSignIn}>
               <Field
                 icon={Mail}
-                label="MGM College email"
+                label="Email address"
                 type="email"
-                placeholder="student@mgmcollege.edu"
+                placeholder="you@gmail.com or student@college.edu"
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
