@@ -257,8 +257,8 @@ function DashboardPage() {
           {/* Stats */}
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { i: Package, label: "Your listings", v: String(myListings.length), t: "Supabase" },
-              { i: Heart, label: "Wishlist", v: String(wishlist.count), t: "This device" },
+              { i: Package, label: "Your listings", v: String(myListings.length), t: "Live on campus" },
+              { i: Heart, label: "Wishlist", v: String(wishlist.count), t: "Saved items" },
               { i: MessageCircle, label: "Messages", v: "Open", t: "Peer chat" },
               {
                 i: TrendingUp,
@@ -710,8 +710,7 @@ function DashboardPage() {
                 <DialogHeader>
                   <DialogTitle>New listing</DialogTitle>
                   <DialogDescription>
-                    Listings are stored in Supabase and merged with the curated demo
-                    catalog everywhere shoppers browse.
+                    Listings are published in real-time and visible across CampusKart to all verified students.
                   </DialogDescription>
                 </DialogHeader>
 
