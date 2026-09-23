@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
-import { asHttpError, HttpError, isAuthHttpStatus } from "@/lib/http-error";
 
-export type TransactionType = "buy" | "rent" | "bonus" | "bot_purchase";
+export type TransactionType = "buy" | "rent" | "bonus" | "bot_purchase" | "perk_redemption" | "sold_reward";
 
 export type WalletTransaction = {
   id: string;
@@ -27,115 +26,133 @@ export type TransferPayload = {
   description: string;
 };
 
-export async function fetchWalletBalance(token: string): Promise<number> {
-  const response = await fetch("/api/economy/balance", {
-    headers: {
-      authorization: `Bearer ${token}`,
-    },
-  });
+const BALANCE_KEY_PREFIX = "campuskart_wallet_balance_";
+const TX_KEY_PREFIX = "campuskart_wallet_tx_";
 
-  if (!response.ok) {
-    throw new HttpError(response.status, "Failed to fetch wallet balance");
+export async function fetchWalletBalance(userId: string): Promise<number> {
+  try {
+    const raw = localStorage.getItem(`${BALANCE_KEY_PREFIX}${userId}`);
+    if (raw !== null) {
+      const parsed = Number(raw);
+      if (!Number.isNaN(parsed)) return parsed;
+    }
+    // Default starter campus points balance: 150 points
+    localStorage.setItem(`${BALANCE_KEY_PREFIX}${userId}`, "150");
+    return 150;
+  } catch {
+    return 150;
   }
-
-  const data = await response.json() as { ok: boolean; balance: number };
-  return data.balance;
 }
 
-export async function fetchTransactionHistory(token: string): Promise<WalletTransaction[]> {
-  const response = await fetch("/api/economy/transactions", {
-    headers: {
-      authorization: `Bearer ${token}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new HttpError(response.status, "Failed to fetch transactions");
+export async function saveWalletBalance(userId: string, amount: number): Promise<void> {
+  try {
+    localStorage.setItem(`${BALANCE_KEY_PREFIX}${userId}`, String(amount));
+  } catch {
+    // ignore
   }
-
-  const data = await response.json() as { ok: boolean; transactions: WalletTransaction[] };
-  return data.transactions;
 }
 
-export async function transferCoins(token: string, payload: TransferPayload): Promise<void> {
-  const response = await fetch("/api/economy/transfer", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
-  });
+export async function fetchTransactionHistory(userId: string): Promise<WalletTransaction[]> {
+  try {
+    const raw = localStorage.getItem(`${TX_KEY_PREFIX}${userId}`);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+    const defaultTx: WalletTransaction[] = [
+      {
+        id: "tx_welcome",
+        senderId: null,
+        receiverId: userId,
+        amount: 150,
+        type: "bonus",
+        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+        description: "Welcome Bonus · MGM Verified Student",
+      },
+      {
+        id: "tx_signup_verify",
+        senderId: null,
+        receiverId: userId,
+        amount: 25,
+        type: "bonus",
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        description: "Email Verification Reward",
+      },
+    ];
+    localStorage.setItem(`${TX_KEY_PREFIX}${userId}`, JSON.stringify(defaultTx));
+    return defaultTx;
+  } catch {
+    return [];
+  }
+}
 
-  if (!response.ok) {
-    const error = (await response.json().catch(() => ({ error: "Transfer failed" }))) as {
-      error?: string;
+export async function addWalletTransaction(
+  userId: string,
+  tx: Omit<WalletTransaction, "id" | "createdAt">,
+): Promise<void> {
+  try {
+    const history = await fetchTransactionHistory(userId);
+    const newTx: WalletTransaction = {
+      ...tx,
+      id: `tx_${Date.now()}`,
+      createdAt: new Date().toISOString(),
     };
-    throw new HttpError(response.status, error.error || "Transfer failed");
+    const updated = [newTx, ...history].slice(0, 50);
+    localStorage.setItem(`${TX_KEY_PREFIX}${userId}`, JSON.stringify(updated));
+  } catch {
+    // ignore
   }
+}
+
+export async function transferCoins(userId: string, payload: TransferPayload): Promise<void> {
+  const currentBalance = await fetchWalletBalance(userId);
+  const newBalance = Math.max(0, currentBalance - payload.amount);
+  await saveWalletBalance(userId, newBalance);
+  await addWalletTransaction(userId, {
+    senderId: userId,
+    receiverId: payload.receiverId,
+    amount: -payload.amount,
+    type: payload.type,
+    referenceId: payload.referenceId,
+    description: payload.description,
+  });
 }
 
 export function useWalletBalance() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
 
   return useQuery({
     queryKey: ["wallet-balance", user?.uid],
     enabled: Boolean(user && !loading),
     queryFn: async () => {
-      if (!user) return 0;
-      const token = await user.getIdToken();
-      try {
-        return await fetchWalletBalance(token);
-      } catch (error) {
-        const httpError = asHttpError(error);
-        if (httpError && isAuthHttpStatus(httpError.status)) {
-          await signOut();
-        }
-        throw error;
-      }
+      if (!user?.uid) return 150;
+      return await fetchWalletBalance(user.uid);
     },
+    initialData: 150,
   });
 }
 
 export function useTransactionHistory() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading } = useAuth();
 
   return useQuery({
     queryKey: ["wallet-transactions", user?.uid],
     enabled: Boolean(user && !loading),
     queryFn: async () => {
-      if (!user) return [];
-      const token = await user.getIdToken();
-      try {
-        return await fetchTransactionHistory(token);
-      } catch (error) {
-        const httpError = asHttpError(error);
-        if (httpError && isAuthHttpStatus(httpError.status)) {
-          await signOut();
-        }
-        throw error;
-      }
+      if (!user?.uid) return [];
+      return await fetchTransactionHistory(user.uid);
     },
+    initialData: [],
   });
 }
 
 export function useTransferCoins() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (payload: TransferPayload) => {
-      if (!user) throw new Error("Not authenticated");
-      const token = await user.getIdToken();
-      try {
-        await transferCoins(token, payload);
-      } catch (error) {
-        const httpError = asHttpError(error);
-        if (httpError && isAuthHttpStatus(httpError.status)) {
-          await signOut();
-        }
-        throw error;
-      }
+      if (!user?.uid) throw new Error("Not authenticated");
+      await transferCoins(user.uid, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });

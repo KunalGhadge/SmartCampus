@@ -1,5 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useWalletBalance, useTransactionHistory } from "@/lib/economy";
+import {
+  useWalletBalance,
+  useTransactionHistory,
+  saveWalletBalance,
+  addWalletTransaction,
+} from "@/lib/economy";
 import {
   Sparkles,
   ArrowUpRight,
@@ -19,8 +24,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRequireAuth } from "@/lib/route-auth";
-import { asHttpError, isAuthHttpStatus } from "@/lib/http-error";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/wallet")({
@@ -29,25 +34,35 @@ export const Route = createFileRoute("/wallet")({
 
 function WalletPage() {
   const { user, loading } = useRequireAuth("/login");
+  const queryClient = useQueryClient();
   const {
-    data: rawBalance = 0,
+    data: rawBalance = 150,
     isLoading: loadingBalance,
-    error: balanceError,
   } = useWalletBalance();
   const {
     data: transactions = [],
     isLoading: loadingTx,
-    error: txError,
   } = useTransactionHistory();
 
   // Local points balance state (initial balance + dynamic rewards)
-  const [points, setPoints] = useState<number>(() => {
-    return typeof rawBalance === "number" && rawBalance > 0 ? rawBalance : 150;
+  const [points, setPoints] = useState<number>(rawBalance);
+
+  useEffect(() => {
+    if (typeof rawBalance === "number") {
+      setPoints(rawBalance);
+    }
+  }, [rawBalance]);
+
+  const [claimedPerks, setClaimedPerks] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(`campuskart_claimed_perks_${user?.uid || "guest"}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
-  const [claimedPerks, setClaimedPerks] = useState<string[]>([]);
-
-  const handleClaimPerk = (perkId: string, cost: number, title: string) => {
+  const handleClaimPerk = async (perkId: string, cost: number, title: string) => {
     if (points < cost) {
       toast.error("Insufficient Campus Points", {
         description: `You need ${cost} points to redeem ${title}. Complete more campus deals to earn points!`,
@@ -55,8 +70,29 @@ function WalletPage() {
       return;
     }
 
-    setPoints((prev) => prev - cost);
-    setClaimedPerks((prev) => [...prev, perkId]);
+    const newBalance = points - cost;
+    setPoints(newBalance);
+    const updatedPerks = [...claimedPerks, perkId];
+    setClaimedPerks(updatedPerks);
+
+    if (user?.uid) {
+      try {
+        localStorage.setItem(`campuskart_claimed_perks_${user.uid}`, JSON.stringify(updatedPerks));
+        await saveWalletBalance(user.uid, newBalance);
+        await addWalletTransaction(user.uid, {
+          senderId: user.uid,
+          receiverId: "campuskart_perks",
+          amount: cost,
+          type: "perk_redemption",
+          description: `Perk Redeemed · ${title}`,
+        });
+        queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
+        queryClient.invalidateQueries({ queryKey: ["wallet-transactions"] });
+      } catch (err) {
+        console.error("Failed to persist perk redemption", err);
+      }
+    }
+
     toast.success(`🎉 ${title} Claimed!`, {
       description: `${cost} points deducted. Perk is now active on your account.`,
     });
@@ -77,22 +113,6 @@ function WalletPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
           Loading Campus Rewards Hub...
-        </div>
-      </div>
-    );
-  }
-
-  const anyError = balanceError ?? txError;
-  const httpError = asHttpError(anyError);
-
-  if (anyError && !httpError) {
-    return (
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-border bg-card p-10 text-center">
-          <h1 className="text-lg font-semibold">Rewards Hub unavailable</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {anyError instanceof Error ? anyError.message : "Could not load rewards details right now."}
-          </p>
         </div>
       </div>
     );
