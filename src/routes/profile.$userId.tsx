@@ -25,7 +25,11 @@ import { fetchListingsBySeller } from "@/lib/firestore-listings";
 import type { Product } from "@/lib/mock-data";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/currency";
+
+function formatINR(amount?: number | null) {
+  if (amount === undefined || amount === null) return "₹0";
+  return "₹" + Number(amount).toLocaleString("en-IN");
+}
 
 export const Route = createFileRoute("/profile/$userId")({
   component: PublicProfilePage,
@@ -326,18 +330,18 @@ function PublicProfilePage() {
                             </h3>
                             <div className="mt-2 flex items-baseline gap-2">
                               <span className="text-base font-bold text-foreground">
-                                {formatCurrency(item.price)}
+                                {formatINR(item.price)}
                               </span>
                               {item.forRent && item.rentPerDay && (
                                 <span className="text-xs text-muted-foreground">
-                                  ({formatCurrency(item.rentPerDay)}/day)
+                                  ({formatINR(item.rentPerDay)}/day)
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
                         <div className="p-4 pt-0">
-                          <Link to="/item/$id" params={{ id: item.id }}>
+                          <Link to="/product/$id" params={{ id: item.id }}>
                             <Button variant="outline" size="sm" className="w-full rounded-xl text-xs">
                               View Item Details
                             </Button>
