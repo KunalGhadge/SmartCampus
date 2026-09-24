@@ -8,18 +8,15 @@ export function Footer() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.08),transparent_70%)]" />
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-5 lg:px-8">
         <div className="lg:col-span-2">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
-              <ShoppingBag className="h-4 w-4" />
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight">
-                Campus<span className="text-brand-gradient">Kart</span>
-              </span>
-              <span className="rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-primary">
-                MGM
-              </span>
-            </div>
+          <Link to="/" className="flex items-center gap-2 group">
+            <img
+              src="/logo.png"
+              alt="CampusKart"
+              className="h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+            />
+            <span className="rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-primary">
+              MGM
+            </span>
           </Link>
           <p className="mt-4 max-w-sm text-sm text-muted-foreground">
             The trusted marketplace built exclusively for verified MGM College students. Buy, sell,

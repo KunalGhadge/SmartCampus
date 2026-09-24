@@ -61,10 +61,7 @@ function SignupPage() {
       <div className="flex flex-col">
         <div className="flex items-center justify-between p-6">
           <Link to="/" className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-xl bg-brand-gradient text-primary-foreground">
-              <ShoppingBag className="h-4 w-4" />
-            </div>
-            <span className="text-sm font-semibold lg:hidden">CampusKart</span>
+            <img src="/logo.png" alt="CampusKart" className="h-8 w-auto object-contain" />
           </Link>
           <ThemeToggle />
         </div>

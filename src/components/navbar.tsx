@@ -81,18 +81,15 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link to={isSignedIn ? "/marketplace" : "/"} className="flex items-center gap-2.5 group">
-          <div className="grid h-8 w-8 place-items-center rounded-xl bg-brand-gradient text-primary-foreground shadow-elegant transition-transform duration-200 group-hover:scale-105">
-            <ShoppingBag className="h-4 w-4" />
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight">
-              Campus<span className="text-brand-gradient">Kart</span>
-            </span>
-            <span className="rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-primary">
-              MGM
-            </span>
-          </div>
+        <Link to={isSignedIn ? "/marketplace" : "/"} className="flex items-center gap-2 group">
+          <img
+            src="/logo.png"
+            alt="CampusKart"
+            className="h-8 sm:h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+          />
+          <span className="rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-primary">
+            MGM
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
