@@ -652,7 +652,7 @@ function ProvideModal({ request, onClose }: { request: ItemRequest | null; onClo
     const senderName = currentProfile?.displayName || user.displayName || "Student";
     const senderAvatar = currentProfile?.photoUrl || user.photoURL || undefined;
 
-    const fullMessage = `[Response to Request: "${request.itemName}"]\n\n${message.trim()}`;
+    const fullMessage = `📋 [Response to Request: "${request.itemName}"]\n💰 Budget: ₹${request.budgetMin.toLocaleString("en-IN")} - ₹${request.budgetMax.toLocaleString("en-IN")}\n🏷️ Category: ${request.category} · Preferred: ${request.condition}\n\n${message.trim()}`;
 
     try {
       const sent = await sendSupabaseDirectMessage({

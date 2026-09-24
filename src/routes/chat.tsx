@@ -23,6 +23,8 @@ import {
   X,
   Bot,
   ChevronDown,
+  HandHeart,
+  ShoppingBag,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navbar } from "@/components/navbar";
@@ -143,6 +145,7 @@ function ChatPage() {
   const [activeId, setActiveId] = useState(() => targetPeerThread?.id || AI_ASSISTANT_THREAD.id);
   const [showThread, setShowThread] = useState(() => Boolean(targetPeerThread));
   const active = threads.find((c) => c.id === activeId) ?? targetPeerThread ?? threads[0] ?? AI_ASSISTANT_THREAD;
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isAutoScrollRef = useRef(true);
@@ -159,6 +162,31 @@ function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const activeIdRef = useRef(activeId);
   const messagesRef = useRef(messages);
+
+  const activeProductContext = useMemo(() => {
+    if (active.product && active.product !== "Direct message") {
+      return active.product;
+    }
+    for (const msg of messages) {
+      if (!msg.text) continue;
+      const reqMatch = msg.text.match(/\[(?:Response to )?Request:?\s*["']?([^"'\n\]]+)["']?\]/i);
+      if (reqMatch && reqMatch[1]) {
+        return `Request: ${reqMatch[1].trim()}`;
+      }
+      const inqMatch = msg.text.match(/\[(?:Product Inquiry:?|Regarding:?)\s*["']?([^"'\n\]]+)["']?\]/i);
+      if (inqMatch && inqMatch[1]) {
+        return inqMatch[1].trim();
+      }
+      const buyMatch = msg.text.match(/interested in (?:buying|renting)\s+["']([^"']+)["']/i);
+      if (buyMatch && buyMatch[1]) {
+        return buyMatch[1].trim();
+      }
+    }
+    if (search.product && search.product !== "Direct message") {
+      return search.product;
+    }
+    return "Direct message";
+  }, [active.product, messages, search.product]);
 
   const isThreadOnline = (thread: ChatThread) => {
     if (thread.isBot) return true;
@@ -362,7 +390,22 @@ function ChatPage() {
           if (targetPeerThread) {
             map.set(targetPeerThread.id, targetPeerThread);
           }
-          loadedThreads.forEach((t) => map.set(t.id, t));
+          loadedThreads.forEach((t) => {
+            const existing = map.get(t.id);
+            if (existing) {
+              map.set(t.id, {
+                ...t,
+                product:
+                  existing.product && existing.product !== "Direct message"
+                    ? existing.product
+                    : t.product,
+                name: existing.name || t.name,
+                avatar: existing.avatar || t.avatar,
+              });
+            } else {
+              map.set(t.id, t);
+            }
+          });
           current.forEach((t) => {
             if (!map.has(t.id)) map.set(t.id, t);
           });
@@ -784,7 +827,18 @@ function ChatPage() {
                       <span className="text-muted-foreground">Offline</span>
                     </>
                   )}
-                  <span className="text-muted-foreground truncate">· About {active.product}</span>
+                  {activeProductContext && activeProductContext !== "Direct message" ? (
+                    <span className="text-primary font-medium truncate flex items-center gap-1">
+                      · {activeProductContext.toLowerCase().startsWith("request:") ? (
+                        <HandHeart className="h-3 w-3 shrink-0" />
+                      ) : (
+                        <ShoppingBag className="h-3 w-3 shrink-0" />
+                      )}
+                      {activeProductContext}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground truncate">· Direct message</span>
+                  )}
                 </div>
               </div>
               <Button variant="ghost" size="icon">
@@ -802,11 +856,41 @@ function ChatPage() {
               ref={scrollContainerRef}
               className="flex-1 min-h-0 space-y-3 overflow-y-auto bg-background/40 p-5"
             >
-              <div className="mx-auto max-w-md rounded-2xl border border-dashed border-border bg-card p-3 text-center text-xs text-muted-foreground">
-                You're chatting about{" "}
-                <span className="font-semibold text-foreground">{active.product}</span>. Stay safe —
-                meet only on campus.
-              </div>
+              {/* Prominent Context Banner */}
+              {activeProductContext && activeProductContext !== "Direct message" && !active.isBot ? (
+                <div className="mx-auto max-w-lg rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-amber-500/10 p-4 shadow-soft">
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/20 text-primary shadow-soft">
+                      {activeProductContext.toLowerCase().startsWith("request:") ? (
+                        <HandHeart className="h-5 w-5" />
+                      ) : (
+                        <ShoppingBag className="h-5 w-5" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-primary/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">
+                          {activeProductContext.toLowerCase().startsWith("request:")
+                            ? "🤝 Student Request Fulfillment"
+                            : "🛍️ Campus Listing Inquiry"}
+                        </span>
+                      </div>
+                      <h4 className="mt-1 text-sm font-bold text-foreground">
+                        {activeProductContext.replace(/^Request:\s*/i, "")}
+                      </h4>
+                      <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                        {activeProductContext.toLowerCase().startsWith("request:")
+                          ? "You are coordinating fulfilling this requested item. Discuss item condition, price, and pick a safe campus meetup location."
+                          : "Discuss price, verify item condition on campus, and use UPI upon physical inspection."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mx-auto max-w-md rounded-2xl border border-dashed border-border bg-card p-3 text-center text-xs text-muted-foreground">
+                  Direct student conversation. Stay safe — meet only at public campus spots.
+                </div>
+              )}
               {messages.map((m, i) => {
                 const isMe = m.from === "me" || m.from === currentUser.id;
                 const reply = m.replyTo ? messageById.get(m.replyTo.id) : null;

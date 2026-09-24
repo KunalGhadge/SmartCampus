@@ -817,6 +817,7 @@ function MarketplaceProvideModal({
       const threadId = dmThreadId(user.uid, peerUid);
       const senderName = profile?.displayName || user.displayName || "Student";
       const senderAvatar = profile?.photoUrl || user.photoURL || undefined;
+      const fullMessage = `📋 [Response to Request: "${request.itemName}"]\n💰 Budget: ₹${request.budgetMin.toLocaleString("en-IN")} - ₹${request.budgetMax.toLocaleString("en-IN")}\n🏷️ Category: ${request.category} · Preferred: ${request.condition}\n\n${message.trim()}`;
 
       // 1. Send the actual direct message to Supabase
       await sendSupabaseDirectMessage({
@@ -824,11 +825,11 @@ function MarketplaceProvideModal({
         senderId: user.uid,
         senderName,
         senderAvatar,
-        text: message.trim(),
+        text: fullMessage,
       });
 
-      toast.success("Message sent!", {
-        description: `Your offer was sent to ${request.student.name}.`,
+      toast.success("Offer sent!", {
+        description: `Your response was delivered to ${request.student.name}.`,
       });
 
       setMessage("");

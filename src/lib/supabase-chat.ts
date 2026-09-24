@@ -200,6 +200,25 @@ export function subscribeToSupabasePresence(
 
 import { SEEDED_CAMPUS_PEERS } from "./supabase-data";
 
+function extractProductContext(rows: SupabaseMessageRow[]): string {
+  for (const row of rows) {
+    if (!row.text) continue;
+    const reqMatch = row.text.match(/\[(?:Response to )?Request:?\s*["']?([^"'\n\]]+)["']?\]/i);
+    if (reqMatch && reqMatch[1]) {
+      return `Request: ${reqMatch[1].trim()}`;
+    }
+    const inqMatch = row.text.match(/\[(?:Product Inquiry:?|Regarding:?)\s*["']?([^"'\n\]]+)["']?\]/i);
+    if (inqMatch && inqMatch[1]) {
+      return inqMatch[1].trim();
+    }
+    const buyMatch = row.text.match(/interested in (?:buying|renting)\s+["']([^"']+)["']/i);
+    if (buyMatch && buyMatch[1]) {
+      return buyMatch[1].trim();
+    }
+  }
+  return "Direct message";
+}
+
 export async function fetchUserChatThreads(currentUserId: string): Promise<ChatThread[]> {
   const baseThreads: ChatThread[] = [AI_ASSISTANT_THREAD];
   if (!isSupabaseConfigured || !currentUserId) return baseThreads;
@@ -214,6 +233,8 @@ export async function fetchUserChatThreads(currentUserId: string): Promise<ChatT
     if (error || !data) return baseThreads;
 
     const threadMap = new Map<string, SupabaseMessageRow>();
+    const threadAllRowsMap = new Map<string, SupabaseMessageRow[]>();
+
     (data as SupabaseMessageRow[]).forEach((row) => {
       if (
         row.thread_id.includes(currentUserId) ||
@@ -222,6 +243,9 @@ export async function fetchUserChatThreads(currentUserId: string): Promise<ChatT
         if (!threadMap.has(row.thread_id)) {
           threadMap.set(row.thread_id, row);
         }
+        const existingList = threadAllRowsMap.get(row.thread_id) || [];
+        existingList.push(row);
+        threadAllRowsMap.set(row.thread_id, existingList);
       }
     });
 
@@ -281,12 +305,13 @@ export async function fetchUserChatThreads(currentUserId: string): Promise<ChatT
 
       const date = new Date(lastRow.created_at);
       const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      const productContext = extractProductContext(threadAllRowsMap.get(tId) || [lastRow]);
 
       parsedThreads.push({
         id: tId,
         name: displayName,
         avatar,
-        product: "Direct message",
+        product: productContext,
         online: true,
         lastMsg: lastRow.text,
         time: timeStr,
