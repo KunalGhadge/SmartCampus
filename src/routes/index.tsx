@@ -440,17 +440,45 @@ function RequestedByStudents() {
             ))}
           </div>
         ) : null}
-        <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {requests.map((req, i) => (
-            <div key={req.id} className={cn(i >= 2 && !showAllMobile && "hidden sm:block")}>
-              <RequestCard
-                request={req}
-                index={i}
-                onProvide={() => setProvideFor(req)}
-              />
+        {!loading && requests.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/60 px-6 py-12 text-center shadow-soft"
+          >
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-secondary text-foreground shadow-soft">
+              <HandHeart className="h-6 w-6 text-primary" />
             </div>
-          ))}
-        </div>
+            <h3 className="mt-4 text-base font-semibold text-foreground">
+              No active student requests right now
+            </h3>
+            <p className="mx-auto mt-1.5 max-w-md text-xs sm:text-sm text-muted-foreground">
+              Need a textbook, drafter, component, or hostel essential? Post a request and campus peers can reach out directly.
+            </p>
+            <div className="mt-5 flex items-center gap-3">
+              <Link to="/marketplace" search={{ tab: "requests" }}>
+                <Button
+                  size="sm"
+                  className="rounded-full bg-brand-gradient px-5 text-xs text-primary-foreground shadow-soft hover:opacity-90"
+                >
+                  <HandHeart className="mr-1.5 h-3.5 w-3.5" /> Post or View Requests
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {requests.map((req, i) => (
+              <div key={req.id} className={cn(i >= 2 && !showAllMobile && "hidden sm:block")}>
+                <RequestCard
+                  request={req}
+                  index={i}
+                  onProvide={() => setProvideFor(req)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {requests.length > 2 && (
           <div className="mt-6 flex justify-center sm:hidden">

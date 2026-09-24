@@ -103,11 +103,7 @@ export function ItemRequestsProvider({ children }: { children: React.ReactNode }
     return undefined;
   }, []);
 
-  const requests = React.useMemo(() => {
-    const ids = new Set(live.map((r) => r.id));
-    const filler = seedRequests.filter((s) => !ids.has(s.id));
-    return [...live, ...filler];
-  }, [live]);
+  const requests = live;
 
   const value = React.useMemo<ItemRequestsContextValue>(
     () => ({

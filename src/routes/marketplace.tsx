@@ -622,19 +622,19 @@ function MarketplacePage() {
                     ))}
                   </div>
                 ) : filteredRequests.length === 0 ? (
-                  <div className="grid place-items-center rounded-2xl border border-dashed border-border bg-card py-20 text-center">
+                  <div className="grid place-items-center rounded-2xl border border-dashed border-border bg-card py-20 px-4 text-center">
                     <div className="grid h-14 w-14 place-items-center rounded-2xl bg-secondary text-foreground shadow-soft">
                       <HandHeart className="h-6 w-6 text-primary" />
                     </div>
-                    <h3 className="mt-4 text-lg font-semibold">No requests found</h3>
-                    <p className="mt-1 text-sm text-muted-foreground max-w-sm">
-                      Need a textbook, lab drafter, or component? Post a request and campus peers will reach out.
+                    <h3 className="mt-4 text-lg font-semibold">No student requests currently posted</h3>
+                    <p className="mt-1.5 text-sm text-muted-foreground max-w-md">
+                      Looking for a textbook, calculator, drafter, or component? Post a request and verified campus peers will reach out with offers.
                     </p>
                     <Button
                       onClick={() => setRequestModalOpen(true)}
-                      className="mt-5 rounded-full bg-brand-gradient text-primary-foreground shadow-soft"
+                      className="mt-6 rounded-full bg-brand-gradient px-6 text-primary-foreground shadow-soft hover:opacity-90"
                     >
-                      Post a Request
+                      <HandHeart className="mr-1.5 h-4 w-4" /> Post a Request
                     </Button>
                   </div>
                 ) : (

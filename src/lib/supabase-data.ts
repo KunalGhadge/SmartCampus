@@ -222,6 +222,7 @@ export function supabaseRowToItemRequest(row: SupabaseItemRequestRow): ItemReque
     campus: row.campus || "",
     department: row.department || "",
     postedAgo: relativePostedLabel(row.created_at),
+    authorId: row.author_id || undefined,
     student: {
       name: row.student_name || "Student",
       avatar:
