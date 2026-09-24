@@ -204,9 +204,11 @@ function AIChatPage() {
               </button>
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500">
-                    <Bot className="h-5 w-5 text-white" />
-                  </div>
+                  <img
+                    src="https://api.dicebear.com/7.x/bottts/svg?seed=smartcampus-ai"
+                    alt="AI Assistant"
+                    className="h-10 w-10 rounded-full bg-secondary border border-border/80 object-cover"
+                  />
                   <span
                     className={cn(
                       "absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-card",
@@ -269,9 +271,11 @@ function AIChatPage() {
                     )}
                   >
                     {msg.sender === "assistant" && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500">
-                        <Bot className="h-4 w-4 text-white" />
-                      </div>
+                      <img
+                        src="https://api.dicebear.com/7.x/bottts/svg?seed=smartcampus-ai"
+                        alt="AI"
+                        className="h-8 w-8 shrink-0 rounded-full bg-secondary border border-border/60 object-cover"
+                      />
                     )}
 
                     <div

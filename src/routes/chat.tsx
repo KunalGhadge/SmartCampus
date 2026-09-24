@@ -836,16 +836,12 @@ function ChatPage() {
                   <li key={c.id}>
                     <button
                       onClick={() => {
-                        if (c.isBot) {
-                          navigate({ to: "/ai-chat" });
-                        } else {
-                          setActiveId(c.id);
-                          setShowThread(true);
-                        }
+                        setActiveId(c.id);
+                        setShowThread(true);
                       }}
                       className={cn(
                         "flex w-full items-center gap-3 border-b border-border/60 p-4 text-left transition hover:bg-secondary/40",
-                        c.id === activeId && !c.isBot && "bg-secondary/60",
+                        c.id === activeId && "bg-secondary/60",
                       )}
                     >
                       <div className="relative">

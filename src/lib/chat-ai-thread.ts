@@ -8,7 +8,7 @@ export const AI_ASSISTANT_THREAD: ChatThread = {
   time: "now",
   online: true,
   unread: 0,
-  avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=bot",
+  avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=smartcampus-ai",
   product: "AI Assistant",
   isBot: true,
 };
