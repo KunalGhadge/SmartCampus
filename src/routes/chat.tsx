@@ -484,9 +484,15 @@ function ChatPage() {
         setMessages((prev) => {
           const map = new Map<string, ChatMessage>();
           prev.forEach((m) => map.set(m.id, m));
-          fetched.forEach((m) => map.set(m.id, m));
+          fetched.forEach((m) => {
+            const existing = map.get(m.id);
+            map.set(m.id, {
+              ...m,
+              reactions: m.reactions || existing?.reactions,
+            });
+          });
           const merged = Array.from(map.values());
-          saveCachedThreadMessages(activeId, merged);
+          saveCachedThreadMessages(activeId, merged, user.uid);
           return merged;
         });
       }
@@ -496,21 +502,33 @@ function ChatPage() {
       if (eventType === "DELETE") {
         setMessages((prev) => {
           const next = prev.filter((m) => m.id !== newMsg.id);
-          saveCachedThreadMessages(activeId, next);
+          saveCachedThreadMessages(activeId, next, user.uid);
           return next;
         });
       } else if (eventType === "UPDATE") {
         setMessages((prev) => {
-          const next = prev.map((m) => (m.id === newMsg.id ? { ...m, ...newMsg } : m));
-          saveCachedThreadMessages(activeId, next);
+          const next = prev.map((m) =>
+            m.id === newMsg.id
+              ? {
+                  ...m,
+                  ...newMsg,
+                  reactions: newMsg.reactions || m.reactions,
+                }
+              : m,
+          );
+          saveCachedThreadMessages(activeId, next, user.uid);
           return next;
         });
       } else {
         // INSERT
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMsg.id)) return prev;
-          const next = [...prev, newMsg];
-          saveCachedThreadMessages(activeId, next);
+          // When peer sends a message, our previous sent messages have been read
+          const markedPrev = prev.map((m) =>
+            m.from === "me" ? { ...m, delivery: "seen" as const } : m,
+          );
+          const next = [...markedPrev, newMsg];
+          saveCachedThreadMessages(activeId, next, user.uid);
           return next;
         });
         setThreads((prevThreads) =>
@@ -604,7 +622,7 @@ function ChatPage() {
           reactions: Object.keys(currentReactions).length ? currentReactions : undefined,
         };
       });
-      saveCachedThreadMessages(activeId, next);
+      saveCachedThreadMessages(activeId, next, user?.uid || currentUser.id);
       return next;
     });
 
@@ -649,7 +667,7 @@ function ChatPage() {
       });
       setMessages((prev) => {
         const next = prev.map((m) => (m.id === editingId ? { ...m, text: trimmed, edited: true } : m));
-        saveCachedThreadMessages(activeId, next);
+        saveCachedThreadMessages(activeId, next, user?.uid || currentUser.id);
         return next;
       });
       setEditingId(null);
@@ -688,7 +706,7 @@ function ChatPage() {
 
     const nextMessages = [...messages, optimisticMsg];
     setMessages(nextMessages);
-    saveCachedThreadMessages(activeId, nextMessages);
+    saveCachedThreadMessages(activeId, nextMessages, user?.uid || currentUser.id);
 
     setThreads((prev) =>
       prev.map((t) =>
@@ -717,8 +735,11 @@ function ChatPage() {
           authorAvatar: AI_AVATAR,
         };
         setMessages((prev) => {
-          const updated = [...prev, aiMsg];
-          saveCachedThreadMessages(activeId, updated);
+          const markedPrev = prev.map((m) =>
+            m.from === "me" ? { ...m, delivery: "seen" as const } : m,
+          );
+          const updated = [...markedPrev, aiMsg];
+          saveCachedThreadMessages(activeId, updated, user?.uid || currentUser.id);
           return updated;
         });
       } catch (err: any) {
@@ -736,7 +757,7 @@ function ChatPage() {
         };
         setMessages((prev) => {
           const updated = [...prev, aiErr];
-          saveCachedThreadMessages(activeId, updated);
+          saveCachedThreadMessages(activeId, updated, user?.uid || currentUser.id);
           return updated;
         });
       } finally {
@@ -757,8 +778,10 @@ function ChatPage() {
 
       if (createdMsg) {
         setMessages((prev) => {
-          const updated = prev.map((m) => (m.id === tempId ? createdMsg : m));
-          saveCachedThreadMessages(activeId, updated);
+          const updated = prev.map((m) =>
+            m.id === tempId ? { ...createdMsg, reactions: m.reactions || createdMsg.reactions } : m,
+          );
+          saveCachedThreadMessages(activeId, updated, user?.uid || currentUser.id);
           return updated;
         });
       }
@@ -977,7 +1000,20 @@ function ChatPage() {
                     {isSentByMe ? (
                       <span className="ml-0.5 inline-flex items-center">
                         {m.delivery === "seen" ? (
-                          <span className="inline-flex items-center text-emerald-400 dark:text-emerald-300 font-bold" title="Seen">
+                          <span
+                            className="inline-flex items-center text-emerald-400 dark:text-emerald-300 font-bold"
+                            title="Seen by student"
+                          >
+                            <CheckCheck className="h-3.5 w-3.5 stroke-[2.5]" />
+                          </span>
+                        ) : m.delivery === "delivered" ? (
+                          <span
+                            className={cn(
+                              "inline-flex items-center font-medium",
+                              isMe ? "text-primary-foreground/90" : "text-muted-foreground",
+                            )}
+                            title="Delivered"
+                          >
                             <CheckCheck className="h-3.5 w-3.5 stroke-[2.5]" />
                           </span>
                         ) : (

@@ -65,7 +65,7 @@ export function rowToChatMessage(row: SupabaseMessageRow, currentUserId: string)
     from: isMe ? "me" : row.sender_id,
     text: row.text,
     time: timeStr,
-    delivery: isMe ? (row.seen ? "seen" : "sent") : undefined,
+    delivery: isMe ? (row.seen ? "seen" : "delivered") : undefined,
     authorId: row.sender_id,
     authorName: row.sender_name || (isMe ? "You" : "Student"),
     authorAvatar:
@@ -113,7 +113,7 @@ export async function sendSupabaseDirectMessage(payload: {
       from: "me",
       text: payload.text,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      delivery: "sent",
+      delivery: "delivered",
       authorId: payload.senderId,
       authorName: payload.senderName,
       authorAvatar: payload.senderAvatar,
@@ -139,7 +139,11 @@ export async function sendSupabaseDirectMessage(payload: {
     throw error;
   }
 
-  return rowToChatMessage(data as SupabaseMessageRow, payload.senderId);
+  const formatted = rowToChatMessage(data as SupabaseMessageRow, payload.senderId);
+  return {
+    ...formatted,
+    delivery: "delivered",
+  };
 }
 
 export async function toggleSupabaseMessageReaction(
@@ -150,11 +154,16 @@ export async function toggleSupabaseMessageReaction(
   if (!isSupabaseConfigured || !messageId || !userId) return null;
 
   try {
-    const { data: row } = await supabase
+    const { data: row, error: selectErr } = await supabase
       .from("messages")
       .select("reactions")
       .eq("id", messageId)
       .maybeSingle();
+
+    if (selectErr) {
+      console.warn("Could not query message reactions from Supabase:", selectErr);
+      return null;
+    }
 
     const rawReactions = (row?.reactions || {}) as Record<string, string[]>;
     const currentList: string[] = Array.isArray(rawReactions[emoji]) ? [...rawReactions[emoji]] : [];
