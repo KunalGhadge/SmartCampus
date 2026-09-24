@@ -21,16 +21,26 @@ export type UserProfile = {
 };
 
 export function buildFallbackUserProfile(user: User): UserProfile {
+  let cached: Partial<UserProfile> = {};
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(`smartcampus_profile_${user.uid}`);
+      if (raw) cached = JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+  }
+
   return {
     firebaseUid: user.uid,
     email: user.email ?? null,
-    displayName: user.displayName ?? null,
-    fullName: user.displayName ?? null,
-    photoUrl: user.photoURL ?? null,
-    department: "General",
-    college: "MGM College",
-    campus: "MGM CET (Engineering)",
-    graduationYear: "2026",
+    displayName: cached.displayName || user.displayName || null,
+    fullName: cached.fullName || user.displayName || null,
+    photoUrl: cached.photoUrl || user.photoURL || null,
+    department: cached.department || "Computer Engineering (CSE)",
+    college: cached.college || "MGM CET (Engineering)",
+    campus: cached.campus || cached.college || "MGM CET (Engineering)",
+    graduationYear: cached.graduationYear || "2026",
     emailVerified: user.emailVerified,
     createdAt: user.metadata.creationTime ?? null,
     lastLoginAt: user.metadata.lastSignInTime ?? null,
@@ -50,17 +60,27 @@ export async function fetchLiveUserProfile(user: User): Promise<UserProfile> {
       .maybeSingle();
 
     if (!error && data) {
-      return {
+      const profile: UserProfile = {
         ...fallback,
         displayName: data.display_name || data.full_name || fallback.displayName,
         fullName: data.full_name || data.display_name || fallback.fullName,
         photoUrl: data.avatar_url || fallback.photoUrl,
         department: data.department || fallback.department,
         college: data.college || fallback.college,
-        campus: data.campus || fallback.campus,
+        campus: data.campus || data.college || fallback.campus,
         graduationYear: data.graduation_year || fallback.graduationYear,
         emailVerified: Boolean(data.email_verified ?? fallback.emailVerified),
       };
+
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(`smartcampus_profile_${user.uid}`, JSON.stringify(profile));
+        } catch {
+          // ignore
+        }
+      }
+
+      return profile;
     }
   } catch (err) {
     console.warn("fetchLiveUserProfile error:", err);
@@ -82,13 +102,38 @@ export async function updateLiveUserProfile(
 ): Promise<UserProfile> {
   const displayName = updates.displayName?.trim() || user.displayName || "Student";
   const photoUrl = updates.photoUrl?.trim() || user.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.uid}`;
-  const department = updates.department?.trim() || "General";
-  const college = updates.college?.trim() || "MGM College";
-  const campus = updates.campus?.trim() || "MGM CET (Engineering)";
+  const department = updates.department?.trim() || "Computer Engineering (CSE)";
+  const college = updates.college?.trim() || "MGM CET (Engineering)";
+  const campus = updates.campus?.trim() || college;
   const graduationYear = updates.graduationYear?.trim() || "2026";
 
+  const resultProfile: UserProfile = {
+    firebaseUid: user.uid,
+    email: user.email ?? null,
+    displayName,
+    fullName: displayName,
+    photoUrl,
+    department,
+    college,
+    campus,
+    graduationYear,
+    emailVerified: user.emailVerified,
+    createdAt: user.metadata.creationTime ?? null,
+    lastLoginAt: user.metadata.lastSignInTime ?? null,
+    source: "supabase",
+  };
+
+  // 1. Immediately cache in localStorage
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem(`smartcampus_profile_${user.uid}`, JSON.stringify(resultProfile));
+    } catch {
+      // ignore
+    }
+  }
+
   if (isSupabaseConfigured && user.uid) {
-    // 1. Update Supabase Auth user metadata
+    // 2. Update Supabase Auth user metadata
     try {
       await supabase.auth.updateUser({
         data: {
@@ -107,7 +152,7 @@ export async function updateLiveUserProfile(
       console.warn("Auth metadata update warning:", authErr);
     }
 
-    // 2. Upsert in public.profiles table
+    // 3. Upsert in public.profiles table
     try {
       const { error } = await supabase.from("profiles").upsert(
         {
@@ -133,21 +178,7 @@ export async function updateLiveUserProfile(
     }
   }
 
-  return {
-    firebaseUid: user.uid,
-    email: user.email ?? null,
-    displayName,
-    fullName: displayName,
-    photoUrl,
-    department,
-    college,
-    campus,
-    graduationYear,
-    emailVerified: user.emailVerified,
-    createdAt: user.metadata.creationTime ?? null,
-    lastLoginAt: user.metadata.lastSignInTime ?? null,
-    source: "supabase",
-  };
+  return resultProfile;
 }
 
 export function useCurrentUserProfile() {

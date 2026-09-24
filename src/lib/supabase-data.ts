@@ -319,9 +319,15 @@ export interface SupabaseProfileRow {
   full_name?: string | null;
   display_name?: string | null;
   email?: string | null;
+  college?: string | null;
   campus?: string | null;
+  department?: string | null;
+  graduation_year?: string | null;
   avatar_url?: string | null;
   email_verified?: boolean | null;
+  verified?: boolean | null;
+  trust_score?: number | null;
+  badges?: string[] | null;
   created_at?: string | null;
   updated_at?: string | null;
 }
@@ -331,7 +337,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000001",
     displayName: "Rhea Kulkarni",
     displayNameLower: "rhea kulkarni",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Computer Engineering (CSE)",
+    graduationYear: "2025",
+    trustScore: 98,
+    badges: ["Student", "Verified Member", "Top Seller"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=RheaKulkarni",
     emailVerified: true,
   },
@@ -339,7 +350,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000002",
     displayName: "Yash Tiwari",
     displayNameLower: "yash tiwari",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Information Technology (IT)",
+    graduationYear: "2026",
+    trustScore: 95,
+    badges: ["Student", "Verified Member"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=YashTiwari",
     emailVerified: true,
   },
@@ -347,7 +363,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000003",
     displayName: "Mihir Jain",
     displayNameLower: "mihir jain",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Artificial Intelligence & Data Science",
+    graduationYear: "2026",
+    trustScore: 92,
+    badges: ["Student", "Tech Enthusiast"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=MihirJain",
     emailVerified: true,
   },
@@ -355,7 +376,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000004",
     displayName: "Devansh Kapoor",
     displayNameLower: "devansh kapoor",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Mechanical Engineering",
+    graduationYear: "2025",
+    trustScore: 96,
+    badges: ["Student", "Verified Member"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=DevanshKapoor",
     emailVerified: true,
   },
@@ -363,7 +389,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000005",
     displayName: "Sana Thomas",
     displayNameLower: "sana thomas",
-    campusKey: "MGM College",
+    campusKey: "MGM Institute of Management",
+    college: "MGM Institute of Management",
+    department: "MBA / Management Studies",
+    graduationYear: "2025",
+    trustScore: 99,
+    badges: ["Student", "Campus Leader"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=SanaThomas",
     emailVerified: true,
   },
@@ -371,7 +402,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000006",
     displayName: "Ananya Sharma",
     displayNameLower: "ananya sharma",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Electronics & Telecom (EXTC)",
+    graduationYear: "2026",
+    trustScore: 94,
+    badges: ["Student", "Verified Member"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=AnanyaSharma",
     emailVerified: true,
   },
@@ -379,7 +415,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000007",
     displayName: "Ishaan Verma",
     displayNameLower: "ishaan verma",
-    campusKey: "MGM College",
+    campusKey: "MGM College of CS & IT",
+    college: "MGM College of CS & IT",
+    department: "Architecture",
+    graduationYear: "2027",
+    trustScore: 91,
+    badges: ["Student"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=IshaanVerma",
     emailVerified: true,
   },
@@ -387,7 +428,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000008",
     displayName: "Tanvi Patel",
     displayNameLower: "tanvi patel",
-    campusKey: "MGM College",
+    campusKey: "MGM University",
+    college: "MGM University",
+    department: "Biotechnology",
+    graduationYear: "2026",
+    trustScore: 97,
+    badges: ["Student", "Verified Member"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=TanviPatel",
     emailVerified: true,
   },
@@ -395,7 +441,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000009",
     displayName: "Rohan Das",
     displayNameLower: "rohan das",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Civil Engineering",
+    graduationYear: "2025",
+    trustScore: 93,
+    badges: ["Student"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=RohanDas",
     emailVerified: true,
   },
@@ -403,7 +454,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000010",
     displayName: "Sneha Rao",
     displayNameLower: "sneha rao",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Computer Engineering (CSE)",
+    graduationYear: "2026",
+    trustScore: 99,
+    badges: ["Student", "Verified Member", "Power Seller"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=SnehaRao",
     emailVerified: true,
   },
@@ -411,7 +467,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000011",
     displayName: "Aditya Joshi",
     displayNameLower: "aditya joshi",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Chemical Engineering",
+    graduationYear: "2025",
+    trustScore: 90,
+    badges: ["Student"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=AdityaJoshi",
     emailVerified: true,
   },
@@ -419,7 +480,12 @@ export const SEEDED_CAMPUS_PEERS = [
     firebaseUid: "a1111111-0000-4000-a000-000000000012",
     displayName: "Kabir Shah",
     displayNameLower: "kabir shah",
-    campusKey: "MGM College",
+    campusKey: "MGM CET (Engineering)",
+    college: "MGM CET (Engineering)",
+    department: "Information Technology (IT)",
+    graduationYear: "2026",
+    trustScore: 95,
+    badges: ["Student", "Verified Member"],
     photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=KabirShah",
     emailVerified: true,
   },
@@ -431,8 +497,14 @@ export async function fetchSupabaseProfiles(): Promise<
     displayName: string;
     displayNameLower: string;
     campusKey: string;
+    college?: string | null;
+    department?: string | null;
+    graduationYear?: string | null;
+    trustScore?: number | null;
+    badges?: string[] | null;
     photoUrl: string | null;
     emailVerified: boolean;
+    createdAt?: string | null;
   }[]
 > {
   if (!isSupabaseConfigured) return SEEDED_CAMPUS_PEERS;
@@ -453,9 +525,15 @@ export async function fetchSupabaseProfiles(): Promise<
         firebaseUid: p.id,
         displayName: name,
         displayNameLower: name.toLowerCase(),
-        campusKey: p.campus || "MGM College",
+        campusKey: p.campus || p.college || "MGM CET (Engineering)",
+        college: p.college || p.campus || "MGM CET (Engineering)",
+        department: p.department || "General",
+        graduationYear: p.graduation_year || "2026",
+        trustScore: p.trust_score ?? 95,
+        badges: p.badges && p.badges.length > 0 ? p.badges : ["Student", "Verified Member"],
         photoUrl: p.avatar_url || null,
         emailVerified: Boolean(p.email_verified),
+        createdAt: p.created_at || null,
       };
     });
 
@@ -478,8 +556,14 @@ export async function fetchSupabaseProfileById(uid: string): Promise<{
   displayName: string;
   displayNameLower: string;
   campusKey: string;
+  college?: string | null;
+  department?: string | null;
+  graduationYear?: string | null;
+  trustScore?: number | null;
+  badges?: string[] | null;
   photoUrl: string | null;
   emailVerified: boolean;
+  createdAt?: string | null;
 } | null> {
   if (!uid) return null;
 
@@ -501,9 +585,15 @@ export async function fetchSupabaseProfileById(uid: string): Promise<{
         firebaseUid: p.id,
         displayName: name,
         displayNameLower: name.toLowerCase(),
-        campusKey: p.campus || "MGM College",
+        campusKey: p.campus || p.college || "MGM CET (Engineering)",
+        college: p.college || p.campus || "MGM CET (Engineering)",
+        department: p.department || "General",
+        graduationYear: p.graduation_year || "2026",
+        trustScore: p.trust_score ?? 95,
+        badges: p.badges && p.badges.length > 0 ? p.badges : ["Student", "Verified Member"],
         photoUrl: p.avatar_url || null,
         emailVerified: Boolean(p.email_verified),
+        createdAt: p.created_at || null,
       };
     }
   } catch {
@@ -514,23 +604,60 @@ export async function fetchSupabaseProfileById(uid: string): Promise<{
 }
 
 export async function upsertSupabaseProfile(
-  user: { uid: string; email: string | null; displayName: string | null; photoURL: string | null; emailVerified: boolean },
+  user: {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
+    emailVerified: boolean;
+  },
   campus: string | null,
+  extra?: { department?: string; college?: string; graduationYear?: string },
 ): Promise<void> {
   if (!isSupabaseConfigured || !user.uid) return;
-  const { error } = await supabase.from("profiles").upsert(
-    {
-      id: user.uid,
-      email: user.email,
-      full_name: user.displayName,
-      display_name: user.displayName,
-      avatar_url: user.photoURL,
-      campus: campus ?? "",
-      email_verified: user.emailVerified,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "id" },
-  );
+
+  let localDepartment = extra?.department;
+  let localCollege = extra?.college;
+  let localGradYear = extra?.graduationYear;
+
+  if (typeof window !== "undefined" && (!localDepartment || !localCollege || !localGradYear)) {
+    try {
+      const saved = localStorage.getItem(`smartcampus_profile_${user.uid}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        localDepartment = localDepartment || parsed.department;
+        localCollege = localCollege || parsed.college;
+        localGradYear = localGradYear || parsed.graduationYear;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const payload: Record<string, unknown> = {
+    id: user.uid,
+    email: user.email,
+    full_name: user.displayName,
+    display_name: user.displayName,
+    avatar_url: user.photoURL,
+    updated_at: new Date().toISOString(),
+    email_verified: user.emailVerified,
+  };
+
+  if (campus) {
+    payload.campus = campus;
+  }
+  if (localCollege) {
+    payload.college = localCollege;
+  }
+  if (localDepartment) {
+    payload.department = localDepartment;
+  }
+  if (localGradYear) {
+    payload.graduation_year = localGradYear;
+  }
+
+  const { error } = await supabase.from("profiles").upsert(payload, { onConflict: "id" });
   if (error) {
     console.warn("Error upserting Supabase profile:", error);
   }

@@ -67,7 +67,7 @@ create policy "Users can update their own profile."
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
-  insert into public.profiles (id, email, full_name, display_name, avatar_url, verified, email_verified, campus, college)
+  insert into public.profiles (id, email, full_name, display_name, avatar_url, verified, email_verified, campus, college, department, graduation_year)
   values (
     new.id,
     new.email,
@@ -76,12 +76,21 @@ begin
     coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', 'https://api.dicebear.com/7.x/avataaars/svg?seed=' || new.id::text),
     coalesce((new.raw_user_meta_data->>'email_verified')::boolean, true),
     coalesce((new.raw_user_meta_data->>'email_verified')::boolean, true),
-    'MGM College',
-    'MGM College'
+    coalesce(new.raw_user_meta_data->>'campus', new.raw_user_meta_data->>'college', 'MGM CET (Engineering)'),
+    coalesce(new.raw_user_meta_data->>'college', 'MGM CET (Engineering)'),
+    coalesce(new.raw_user_meta_data->>'department', 'Computer Engineering (CSE)'),
+    coalesce(new.raw_user_meta_data->>'graduation_year', '2026')
   )
   on conflict (id) do update
   set
     email = excluded.email,
+    full_name = coalesce(excluded.full_name, public.profiles.full_name),
+    display_name = coalesce(excluded.display_name, public.profiles.display_name),
+    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url),
+    department = coalesce(nullif(excluded.department, ''), public.profiles.department),
+    college = coalesce(nullif(excluded.college, ''), public.profiles.college),
+    campus = coalesce(nullif(excluded.campus, ''), public.profiles.campus),
+    graduation_year = coalesce(nullif(excluded.graduation_year, ''), public.profiles.graduation_year),
     updated_at = now();
   return new;
 end;

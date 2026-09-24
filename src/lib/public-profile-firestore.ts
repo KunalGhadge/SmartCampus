@@ -12,13 +12,23 @@ export type PublicProfileDoc = {
   displayName: string;
   displayNameLower: string;
   campusKey: string;
+  college?: string | null;
+  department?: string | null;
+  graduationYear?: string | null;
+  trustScore?: number | null;
+  badges?: string[] | null;
   photoUrl: string | null;
   emailVerified: boolean;
+  createdAt?: string | null;
 };
 
-export async function upsertPublicProfile(user: User, campus: CampusName | null): Promise<void> {
+export async function upsertPublicProfile(
+  user: User,
+  campus: CampusName | null,
+  extra?: { department?: string; college?: string; graduationYear?: string },
+): Promise<void> {
   if (!isSupabaseConfigured) return;
-  await upsertSupabaseProfile(user, campus);
+  await upsertSupabaseProfile(user, campus, extra);
 }
 
 export async function fetchPublicProfile(uid: string): Promise<PublicProfileDoc | null> {

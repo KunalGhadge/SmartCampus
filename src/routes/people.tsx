@@ -201,15 +201,18 @@ function PeoplePage() {
                           <ShieldCheck className="h-4 w-4 shrink-0 text-primary" aria-label="Verified email" />
                         ) : null}
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         {p.campusKey ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 font-medium">
-                            <MapPin className="h-3 w-3" />
+                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 font-medium text-secondary-foreground">
+                            <MapPin className="h-3 w-3 text-primary" />
                             {p.campusKey}
                           </span>
-                        ) : (
-                          <span className="text-muted-foreground/80">Campus not set yet</span>
-                        )}
+                        ) : null}
+                        {p.department && p.department !== "General" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                            {p.department}
+                          </span>
+                        ) : null}
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
                         <Link to="/profile/$userId" params={{ userId: p.firebaseUid }}>
