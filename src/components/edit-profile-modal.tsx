@@ -9,8 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserProfile, useUpdateProfileMutation, type UserProfile } from "@/lib/user-profile";
+import { useAuth } from "@/lib/auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { awardProfileCompletionBonus, isProfileBonusClaimed } from "@/lib/economy";
 import { toast } from "sonner";
-import { Sparkles, Dices, Upload, Check, User, GraduationCap, Building2, BookOpen } from "lucide-react";
+import { Sparkles, Dices, Upload, Check, User, GraduationCap, Building2, BookOpen, Gift } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const PRESET_AVATARS = [
@@ -57,6 +60,8 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const profileQuery = useCurrentUserProfile();
   const updateMutation = useUpdateProfileMutation();
   const profile = profileQuery.data;
@@ -67,6 +72,7 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
   const [college, setCollege] = useState("MGM CET (Engineering)");
   const [graduationYear, setGraduationYear] = useState("2026");
   const [isCustomUrlOpen, setIsCustomUrlOpen] = useState(false);
+  const alreadyClaimed = user?.uid ? isProfileBonusClaimed(user.uid) : false;
 
   useEffect(() => {
     if (profile) {
@@ -124,9 +130,24 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
         graduationYear,
       });
 
-      toast.success("Profile updated successfully", {
-        description: "Your name, avatar, and campus details are now synced.",
-      });
+      // Award profile completion bonus points (+100 Campus Points)
+      if (user?.uid) {
+        const bonusResult = await awardProfileCompletionBonus(user.uid, 100);
+        if (bonusResult.awarded) {
+          queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
+          queryClient.invalidateQueries({ queryKey: ["wallet-transactions"] });
+          toast.success("🎉 +100 Campus Points Earned!", {
+            description: "You received 100 points for completing your campus profile!",
+          });
+        } else {
+          toast.success("Profile updated successfully", {
+            description: "Your name, avatar, and campus details are now synced.",
+          });
+        }
+      } else {
+        toast.success("Profile updated successfully");
+      }
+
       onOpenChange(false);
     } catch (err) {
       console.error(err);
@@ -153,7 +174,24 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 pt-3">
+        {!alreadyClaimed && (
+          <div className="mt-2 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-primary/10 to-emerald-500/10 p-3.5 flex items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="grid h-8 w-8 place-items-center rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                <Gift className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">Earn +100 Campus Points</p>
+                <p className="text-[11px] text-muted-foreground">Save your verified branch & college details.</p>
+              </div>
+            </div>
+            <span className="rounded-full bg-amber-500/20 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 shrink-0">
+              +100 pts
+            </span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
           {/* Avatar Section */}
           <div>
             <label className="text-xs font-semibold text-foreground">Profile Picture / Avatar</label>

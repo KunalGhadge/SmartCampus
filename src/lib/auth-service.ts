@@ -46,6 +46,26 @@ export async function loginWithEmail(email: string, pass: string): Promise<AppAu
   });
   if (error) throw error;
   if (!data.user) throw new Error("No user returned from sign in.");
+
+  // Ensure public profile exists for classmate discovery
+  try {
+    const name = (data.user.user_metadata?.full_name as string) || (data.user.user_metadata?.name as string) || data.user.email?.split("@")[0] || "Student";
+    await supabase.from("profiles").upsert(
+      {
+        id: data.user.id,
+        email: data.user.email,
+        full_name: name,
+        display_name: name,
+        avatar_url: (data.user.user_metadata?.avatar_url as string) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.id}`,
+        email_verified: Boolean(data.user.email_confirmed_at),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+  } catch (err) {
+    console.warn("Could not sync profile on login:", err);
+  }
+
   return mapSupabaseUserToAppUser(data.user);
 }
 
@@ -71,6 +91,29 @@ export async function signupWithEmail(
   });
   if (error) throw error;
   if (!data.user) throw new Error("No user returned from sign up.");
+
+  // Ensure discoverable student row in public.profiles table immediately
+  try {
+    const name = displayName?.trim() || data.user.email?.split("@")[0] || "Student";
+    await supabase.from("profiles").upsert(
+      {
+        id: data.user.id,
+        email: data.user.email,
+        full_name: name,
+        display_name: name,
+        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.id}`,
+        campus: "MGM CET (Engineering)",
+        college: "MGM CET (Engineering)",
+        department: "Computer Engineering (CSE)",
+        graduation_year: "2026",
+        email_verified: Boolean(data.user.email_confirmed_at),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+  } catch (err) {
+    console.warn("Could not create initial student profile on signup:", err);
+  }
   
   // If session is null or identities exist with unconfirmed email, verification is required
   const needsEmailVerification = !data.session;

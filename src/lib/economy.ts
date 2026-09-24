@@ -179,6 +179,39 @@ export async function claimInstagramBonus(userId: string): Promise<boolean> {
   }
 }
 
+const PROFILE_BONUS_PREFIX = "campuskart_profile_bonus_";
+
+export function isProfileBonusClaimed(userId: string): boolean {
+  try {
+    return localStorage.getItem(`${PROFILE_BONUS_PREFIX}${userId}`) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export async function awardProfileCompletionBonus(userId: string, points = 100): Promise<{ awarded: boolean; points: number }> {
+  if (!userId) return { awarded: false, points: 0 };
+  try {
+    if (isProfileBonusClaimed(userId)) {
+      return { awarded: false, points: 0 };
+    }
+    const current = await fetchWalletBalance(userId);
+    const updated = current + points;
+    await saveWalletBalance(userId, updated);
+    await addWalletTransaction(userId, {
+      senderId: null,
+      receiverId: userId,
+      amount: points,
+      type: "bonus",
+      description: "Profile Completed Bonus · Campus Identity Verified",
+    });
+    localStorage.setItem(`${PROFILE_BONUS_PREFIX}${userId}`, "true");
+    return { awarded: true, points };
+  } catch {
+    return { awarded: false, points: 0 };
+  }
+}
+
 export function useTransferCoins() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
