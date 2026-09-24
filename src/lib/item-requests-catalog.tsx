@@ -12,6 +12,8 @@ export type ItemRequestsContextValue = {
   liveFromFirestore: number;
   loading: boolean;
   error: Error | null;
+  deleteRequest: (requestId: string) => Promise<boolean>;
+  refreshRequests: () => Promise<void>;
 };
 
 const ItemRequestsContext = React.createContext<ItemRequestsContextValue | null>(null);
@@ -20,6 +22,36 @@ export function ItemRequestsProvider({ children }: { children: React.ReactNode }
   const [live, setLive] = React.useState<ItemRequest[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
+
+  const refreshRequests = React.useCallback(async () => {
+    if (!isSupabaseConfigured) return;
+    try {
+      const items = await fetchSupabaseItemRequests();
+      setLive(items);
+      setError(null);
+    } catch (err) {
+      console.error("Supabase item requests refresh error:", err);
+    }
+  }, []);
+
+  const deleteRequest = React.useCallback(async (requestId: string): Promise<boolean> => {
+    if (!isSupabaseConfigured || !requestId) return false;
+    try {
+      const { error: delErr } = await supabase
+        .from("item_requests")
+        .delete()
+        .eq("id", requestId);
+      if (delErr) {
+        console.error("Error deleting item request:", delErr);
+        return false;
+      }
+      setLive((prev) => prev.filter((r) => r.id !== requestId));
+      return true;
+    } catch (err) {
+      console.error("Failed to delete request:", err);
+      return false;
+    }
+  }, []);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -78,8 +110,15 @@ export function ItemRequestsProvider({ children }: { children: React.ReactNode }
   }, [live]);
 
   const value = React.useMemo<ItemRequestsContextValue>(
-    () => ({ requests, liveFromFirestore: live.length, loading, error }),
-    [requests, live.length, loading, error],
+    () => ({
+      requests,
+      liveFromFirestore: live.length,
+      loading,
+      error,
+      deleteRequest,
+      refreshRequests,
+    }),
+    [requests, live.length, loading, error, deleteRequest, refreshRequests],
   );
 
   return <ItemRequestsContext.Provider value={value}>{children}</ItemRequestsContext.Provider>;

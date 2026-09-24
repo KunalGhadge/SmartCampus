@@ -17,6 +17,7 @@ import {
   MapPin,
   GraduationCap,
   IndianRupee,
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Navbar } from "@/components/navbar";
@@ -29,6 +30,9 @@ import { categorySummaries, useCatalog } from "@/lib/catalog";
 import { useCampusItemRequests } from "@/lib/item-requests-catalog";
 import { RequestItemModal } from "@/components/request-item-modal";
 import { useAuth } from "@/lib/auth";
+import { useCurrentUserProfile, buildFallbackUserProfile } from "@/lib/user-profile";
+import { dmThreadId } from "@/lib/chat-dm";
+import { sendSupabaseDirectMessage } from "@/lib/supabase-chat";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -476,6 +480,26 @@ function RequestCard({
   index: number;
   onProvide: () => void;
 }) {
+  const { user } = useAuth();
+  const { deleteRequest } = useCampusItemRequests();
+  const [deleting, setDeleting] = useState(false);
+  const isOwner = Boolean(user && request.authorId && request.authorId === user.uid);
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`Are you sure you want to remove your request for "${request.itemName}"?`)) {
+      return;
+    }
+    setDeleting(true);
+    const ok = await deleteRequest(request.id);
+    setDeleting(false);
+    if (ok) {
+      toast.success("Request removed successfully");
+    } else {
+      toast.error("Failed to remove request");
+    }
+  };
+
   const urgencyColors: Record<string, string> = {
     Urgent: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
     High: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
@@ -536,7 +560,7 @@ function RequestCard({
       {/* Student + CTA */}
       <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
         <div className="flex items-center gap-2">
-          <img src={request.student.avatar} alt="" className="h-7 w-7 rounded-full" />
+          <img src={request.student.avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
           <div>
             <div className="flex items-center gap-1 text-xs font-medium">
               {request.student.name}
@@ -544,15 +568,30 @@ function RequestCard({
             </div>
           </div>
         </div>
-        <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
-          <Button
-            size="sm"
-            onClick={onProvide}
-            className="rounded-full bg-brand-gradient px-4 text-xs text-primary-foreground shadow-soft hover:opacity-90"
-          >
-            I Can Provide This
-          </Button>
-        </motion.div>
+        <div className="flex items-center gap-2">
+          {isOwner ? (
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={deleting}
+              onClick={handleDelete}
+              className="rounded-full px-3 text-xs gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {deleting ? "Removing..." : "Remove"}
+            </Button>
+          ) : (
+            <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}>
+              <Button
+                size="sm"
+                onClick={onProvide}
+                className="rounded-full bg-brand-gradient px-4 text-xs text-primary-foreground shadow-soft hover:opacity-90"
+              >
+                I Can Provide This
+              </Button>
+            </motion.div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -560,23 +599,67 @@ function RequestCard({
 
 function ProvideModal({ request, onClose }: { request: ItemRequest | null; onClose: () => void }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const profileQuery = useCurrentUserProfile();
+  const currentProfile = profileQuery.data ?? (user ? buildFallbackUserProfile(user) : null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !request) return;
+    if (!user) {
+      toast.error("Please log in to send a message to this student");
+      void navigate({ to: "/login" });
+      return;
+    }
+
     setSending(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setSending(false);
-    toast.success("Draft saved", {
-      description: `${request?.student.name} can be reached from Messages — paste your note there to coordinate safely.`,
-    });
-    setMessage("");
-    onClose();
-    void navigate({
-      to: "/chat",
-      search: { peerUid: undefined, peerName: undefined, peerAvatar: undefined },
-    });
+    const peerUid =
+      request.authorId ||
+      `student-${encodeURIComponent(request.student.name.toLowerCase().replace(/\s+/g, "-"))}`;
+    const peerName = request.student.name;
+    const peerAvatar = request.student.avatar;
+
+    const threadId = dmThreadId(user.uid, peerUid);
+    const senderName = currentProfile?.displayName || user.displayName || "Student";
+    const senderAvatar = currentProfile?.photoUrl || user.photoURL || undefined;
+
+    const fullMessage = `[Response to Request: "${request.itemName}"]\n\n${message.trim()}`;
+
+    try {
+      const sent = await sendSupabaseDirectMessage({
+        threadId,
+        senderId: user.uid,
+        senderName,
+        senderAvatar,
+        text: fullMessage,
+      });
+
+      setSending(false);
+      if (sent) {
+        toast.success("Message sent!", {
+          description: `Your response was delivered to ${peerName}.`,
+        });
+      } else {
+        toast.info("Opening conversation", {
+          description: `Connecting you with ${peerName}...`,
+        });
+      }
+      setMessage("");
+      onClose();
+      void navigate({
+        to: "/chat",
+        search: {
+          peerUid,
+          peerName,
+          peerAvatar,
+          product: request.itemName,
+        },
+      });
+    } catch {
+      setSending(false);
+      toast.error("Could not send message. Please try again.");
+    }
   };
 
   return (

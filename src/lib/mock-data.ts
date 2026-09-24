@@ -532,6 +532,7 @@ export type ItemRequest = {
   campus: string;
   department: string;
   postedAgo: string;
+  authorId?: string;
   student: { name: string; avatar: string; verified: boolean };
 };
 
@@ -549,6 +550,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM CET (Engineering)",
     department: "Mechanical",
     postedAgo: "14 min ago",
+    authorId: "a1111111-0000-4000-a000-000000000005",
     student: { name: "Rahul Verma", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=RahulVerma", verified: true },
   },
   {
@@ -564,6 +566,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM College",
     department: "CSE",
     postedAgo: "42 min ago",
+    authorId: "a1111111-0000-4000-a000-000000000004",
     student: { name: "Priya Nair", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaNair", verified: true },
   },
   {
@@ -579,6 +582,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM University",
     department: "CSE",
     postedAgo: "2 hours ago",
+    authorId: "a1111111-0000-4000-a000-000000000007",
     student: { name: "Arjun Khanna", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=ArjunKhanna", verified: true },
   },
   {
@@ -594,6 +598,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM IT & CS Dept",
     department: "IT",
     postedAgo: "31 min ago",
+    authorId: "a1111111-0000-4000-a000-000000000006",
     student: { name: "Kavya Joshi", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=KavyaJoshi", verified: false },
   },
   {
@@ -609,6 +614,7 @@ export const itemRequests: ItemRequest[] = [
     campus: "MGM CET (Engineering)",
     department: "ECE",
     postedAgo: "26 min ago",
+    authorId: "a1111111-0000-4000-a000-000000000008",
     student: { name: "Siddharth Rao", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SiddharthRao", verified: true },
   },
   {

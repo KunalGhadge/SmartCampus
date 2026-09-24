@@ -13,6 +13,7 @@ import {
   GraduationCap,
   BadgeCheck,
   MessageCircle,
+  Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +26,10 @@ import { type Category, type ItemRequest } from "@/lib/mock-data";
 import { categorySummaries, useCatalog } from "@/lib/catalog";
 import { useCampusItemRequests } from "@/lib/item-requests-catalog";
 import { RequestItemModal } from "@/components/request-item-modal";
+import { useAuth } from "@/lib/auth";
+import { buildFallbackUserProfile, useCurrentUserProfile } from "@/lib/user-profile";
+import { dmThreadId } from "@/lib/chat-dm";
+import { sendSupabaseDirectMessage } from "@/lib/supabase-chat";
 import { cn } from "@/lib/utils";
 import { CAMPUSES } from "@/lib/campus";
 import { toast } from "sonner";
@@ -41,8 +46,11 @@ export const Route = createFileRoute("/marketplace")({
 
 function MarketplacePage() {
   const search = Route.useSearch();
+  const { user } = useAuth();
+  const profileQuery = useCurrentUserProfile();
+  const profile = profileQuery.data ?? (user ? buildFallbackUserProfile(user) : null);
   const { products, loading, firestoreError } = useCatalog();
-  const { requests, loading: requestsLoading } = useCampusItemRequests();
+  const { requests, loading: requestsLoading, deleteRequest } = useCampusItemRequests();
   const categories = useMemo(() => categorySummaries(products), [products]);
 
   const [activeTab, setActiveTab] = useState<"listings" | "requests">(
@@ -631,14 +639,36 @@ function MarketplacePage() {
                   </div>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                    {filteredRequests.map((req, i) => (
-                      <MarketplaceRequestCard
-                        key={req.id}
-                        request={req}
-                        index={i}
-                        onProvide={() => setProvideFor(req)}
-                      />
-                    ))}
+                    {filteredRequests.map((req, i) => {
+                      const isOwner = Boolean(
+                        user?.uid &&
+                          (req.authorId === user.uid || req.authorId === profile?.firebaseUid),
+                      );
+
+                      return (
+                        <MarketplaceRequestCard
+                          key={req.id}
+                          request={req}
+                          index={i}
+                          isOwner={isOwner}
+                          onDelete={async () => {
+                            if (
+                              !confirm(
+                                `Are you sure you want to remove your request for "${req.itemName}"?`,
+                              )
+                            )
+                              return;
+                            const ok = await deleteRequest(req.id);
+                            if (ok) {
+                              toast.success("Request removed successfully");
+                            } else {
+                              toast.error("Could not remove request");
+                            }
+                          }}
+                          onProvide={() => setProvideFor(req)}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </>
@@ -656,10 +686,14 @@ function MarketplacePage() {
 function MarketplaceRequestCard({
   request,
   index,
+  isOwner,
+  onDelete,
   onProvide,
 }: {
   request: ItemRequest;
   index: number;
+  isOwner?: boolean;
+  onDelete?: () => void;
   onProvide: () => void;
 }) {
   const urgencyColors: Record<string, string> = {
@@ -724,13 +758,28 @@ function MarketplaceRequestCard({
           />
           <span className="text-xs font-medium text-foreground">{request.student.name}</span>
         </div>
-        <Button
-          size="sm"
-          onClick={onProvide}
-          className="rounded-full bg-brand-gradient px-3 py-1 text-xs text-primary-foreground shadow-soft hover:opacity-90"
-        >
-          I Can Provide
-        </Button>
+
+        <div className="flex items-center gap-1.5">
+          {isOwner ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onDelete}
+              className="h-8 rounded-full px-2.5 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              title="Remove my request"
+            >
+              <Trash2 className="mr-1 h-3.5 w-3.5" /> Remove
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={onProvide}
+              className="rounded-full bg-brand-gradient px-3 py-1 text-xs text-primary-foreground shadow-soft hover:opacity-90"
+            >
+              I Can Provide
+            </Button>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -744,23 +793,65 @@ function MarketplaceProvideModal({
   onClose: () => void;
 }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const profileQuery = useCurrentUserProfile();
+  const profile = profileQuery.data ?? (user ? buildFallbackUserProfile(user) : null);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
-    if (!message.trim()) return;
+    if (!message.trim() || !request) return;
+    if (!user?.uid) {
+      toast.error("Sign in required", {
+        description: "Please sign in to message this student.",
+      });
+      void navigate({ to: "/login" });
+      return;
+    }
+
     setSending(true);
-    await new Promise((r) => setTimeout(r, 300));
-    setSending(false);
-    toast.success("Draft ready", {
-      description: `Opening message thread with ${request?.student.name}.`,
-    });
-    setMessage("");
-    onClose();
-    void navigate({
-      to: "/chat",
-      search: { peerUid: undefined, peerName: undefined, peerAvatar: undefined },
-    });
+    try {
+      const peerUid =
+        request.authorId ||
+        `peer_${request.student.name.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase()}`;
+      const threadId = dmThreadId(user.uid, peerUid);
+      const senderName = profile?.displayName || user.displayName || "Student";
+      const senderAvatar = profile?.photoUrl || user.photoURL || undefined;
+
+      // 1. Send the actual direct message to Supabase
+      await sendSupabaseDirectMessage({
+        threadId,
+        senderId: user.uid,
+        senderName,
+        senderAvatar,
+        text: message.trim(),
+      });
+
+      toast.success("Message sent!", {
+        description: `Your offer was sent to ${request.student.name}.`,
+      });
+
+      setMessage("");
+      onClose();
+
+      // 2. Open chat thread directly
+      void navigate({
+        to: "/chat",
+        search: {
+          peerUid,
+          peerName: request.student.name,
+          peerAvatar: request.student.avatar,
+          product: `Request: ${request.itemName}`,
+        },
+      });
+    } catch (err) {
+      console.error("Error sending provide message:", err);
+      toast.error("Could not send message", {
+        description: err instanceof Error ? err.message : "Try again or open chat directly.",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -812,8 +903,7 @@ function MarketplaceProvideModal({
                   onClick={handleSend}
                   className="rounded-full bg-brand-gradient px-5 text-primary-foreground shadow-soft hover:opacity-90"
                 >
-                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
-                  Send Message
+                  {sending ? "Sending…" : "Send Message"}
                 </Button>
               </div>
             </div>
