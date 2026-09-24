@@ -7,16 +7,16 @@ import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useRequireAuth } from "@/lib/route-auth";
-import { askCampusAI, type ChatMessage } from "@/lib/groq-ai";
+import { askCampusAI, getAiAssistantStatus, type ChatMessage } from "@/lib/groq-ai";
 import { ChatMarkdown } from "@/components/chat-markdown";
 
 export const Route = createFileRoute("/ai-chat")({ component: AIChatPage });
 
 const SUGGESTED_PROMPTS = [
-  "Find books for CSE",
-  "Suggest affordable gadgets",
-  "Show trending items",
-  "Find hostel essentials",
+  "What active textbooks are listed right now?",
+  "Show me open student item requests",
+  "How do I list an item for sale/rent?",
+  "Recommend affordable calculators or drafters",
 ];
 
 interface AIChatMessage {
@@ -30,10 +30,19 @@ function AIChatPage() {
   const navigate = useNavigate();
   const { user, loading } = useRequireAuth("/login");
 
+  const [botStatus, setBotStatus] = useState(() => getAiAssistantStatus());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setBotStatus(getAiAssistantStatus());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [messages, setMessages] = useState<AIChatMessage[]>([
     {
       id: "welcome",
-      text: "Hi! 👋 I'm your CampusKart AI Assistant for MGM College. I can help you find textbooks, review campus pricing, suggest hostel essentials, and recommend items for MGM College students. What are you looking for today?",
+      text: "Yo! 👋 I'm your SmartCampus AI Assistant. I know all active items in the campus store, who's selling them, active student requests, and how to get anything sorted on CampusKart. What can I look up for you today?",
       sender: "assistant",
       timestamp: new Date(),
     },
@@ -139,16 +148,43 @@ function AIChatPage() {
                 <ArrowLeft className="h-5 w-5" />
               </button>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500">
-                  <Bot className="h-5 w-5 text-white" />
+                <div className="relative">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500">
+                    <Bot className="h-5 w-5 text-white" />
+                  </div>
+                  <span
+                    className={cn(
+                      "absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-card",
+                      botStatus.isOnline ? "bg-emerald-500" : "bg-amber-500 animate-pulse",
+                    )}
+                  />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-foreground">Campus Assistant</h2>
-                  <p className="text-xs text-muted-foreground">AI Powered • Always available</p>
+                  <h2 className="font-semibold text-foreground">Campus AI Assistant</h2>
+                  <p className="text-xs text-muted-foreground">
+                    {botStatus.isOnline ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                        🟢 Online • Store & Requests Aware
+                      </span>
+                    ) : (
+                      <span className="text-amber-600 dark:text-amber-400 font-medium">
+                        🔴 Offline (Cooling down · {botStatus.retryAfterSeconds}s)
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
+
+          {!botStatus.isOnline && (
+            <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2.5 text-xs text-amber-700 dark:text-amber-300 flex items-center justify-between">
+              <span>
+                ⏳ AI rate limit reached. Assistant is resting and will be back online in{" "}
+                <strong>{botStatus.retryAfterSeconds}s</strong>.
+              </span>
+            </div>
+          )}
 
           {/* Messages Area */}
           <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-6 py-4">

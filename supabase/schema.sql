@@ -271,6 +271,9 @@ alter table public.messages add column if not exists sender_name text default 'S
 alter table public.messages add column if not exists sender_avatar text;
 alter table public.messages add column if not exists image_url text;
 alter table public.messages add column if not exists file_url text;
+alter table public.messages add column if not exists reactions jsonb default '{}'::jsonb;
+alter table public.messages add column if not exists seen boolean default false;
+alter table public.messages add column if not exists seen_at timestamptz;
 
 alter table public.messages enable row level security;
 
@@ -283,6 +286,11 @@ drop policy if exists "Authenticated users can send messages." on public.message
 create policy "Authenticated users can send messages."
   on public.messages for insert
   with check ( true );
+
+drop policy if exists "Users can update reactions and status." on public.messages;
+create policy "Users can update reactions and status."
+  on public.messages for update
+  using ( true );
 
 -- Enable Realtime publication safely (idempotent DO block)
 do $$

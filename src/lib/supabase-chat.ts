@@ -11,6 +11,9 @@ export interface SupabaseMessageRow {
   text: string;
   image_url?: string | null;
   file_url?: string | null;
+  reactions?: Record<string, string[]> | null;
+  seen?: boolean | null;
+  seen_at?: string | null;
   created_at: string;
 }
 
@@ -39,19 +42,37 @@ export function rowToChatMessage(row: SupabaseMessageRow, currentUserId: string)
     });
   }
 
+  // Parse reactions { "👍": ["uid1", "uid2"] }
+  let chatReactions: Record<string, { count: number; mine?: boolean }> | undefined = undefined;
+  if (row.reactions && typeof row.reactions === "object") {
+    chatReactions = {};
+    for (const [emoji, val] of Object.entries(row.reactions)) {
+      if (Array.isArray(val) && val.length > 0) {
+        chatReactions[emoji] = {
+          count: val.length,
+          mine: val.includes(currentUserId),
+        };
+      }
+    }
+    if (Object.keys(chatReactions).length === 0) {
+      chatReactions = undefined;
+    }
+  }
+
   return {
     id: row.id,
     threadId: row.thread_id,
     from: isMe ? "me" : row.sender_id,
     text: row.text,
     time: timeStr,
-    delivery: "delivered",
+    delivery: isMe ? (row.seen ? "seen" : "sent") : undefined,
     authorId: row.sender_id,
     authorName: row.sender_name || (isMe ? "You" : "Student"),
     authorAvatar:
       row.sender_avatar ||
       `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(row.sender_id)}`,
     attachments: attachments.length ? attachments : undefined,
+    reactions: chatReactions,
   };
 }
 
@@ -108,6 +129,7 @@ export async function sendSupabaseDirectMessage(payload: {
       text: payload.text,
       image_url: payload.imageUrl,
       file_url: payload.fileUrl,
+      seen: false,
     })
     .select("*")
     .single();
@@ -120,10 +142,72 @@ export async function sendSupabaseDirectMessage(payload: {
   return rowToChatMessage(data as SupabaseMessageRow, payload.senderId);
 }
 
+export async function toggleSupabaseMessageReaction(
+  messageId: string,
+  emoji: string,
+  userId: string,
+): Promise<Record<string, string[]> | null> {
+  if (!isSupabaseConfigured || !messageId || !userId) return null;
+
+  try {
+    const { data: row } = await supabase
+      .from("messages")
+      .select("reactions")
+      .eq("id", messageId)
+      .maybeSingle();
+
+    const rawReactions = (row?.reactions || {}) as Record<string, string[]>;
+    const currentList: string[] = Array.isArray(rawReactions[emoji]) ? [...rawReactions[emoji]] : [];
+
+    let updatedList: string[];
+    if (currentList.includes(userId)) {
+      updatedList = currentList.filter((id) => id !== userId);
+    } else {
+      updatedList = [...currentList, userId];
+    }
+
+    const newReactions = { ...rawReactions };
+    if (updatedList.length > 0) {
+      newReactions[emoji] = updatedList;
+    } else {
+      delete newReactions[emoji];
+    }
+
+    const { error } = await supabase
+      .from("messages")
+      .update({ reactions: newReactions })
+      .eq("id", messageId);
+
+    if (error) {
+      console.warn("Could not update reaction:", error);
+      return null;
+    }
+
+    return newReactions;
+  } catch (err) {
+    console.warn("Reaction update error:", err);
+    return null;
+  }
+}
+
+export async function markSupabaseThreadSeen(threadId: string, currentUserId: string): Promise<void> {
+  if (!isSupabaseConfigured || !threadId || !currentUserId) return;
+  try {
+    await supabase
+      .from("messages")
+      .update({ seen: true, seen_at: new Date().toISOString() })
+      .eq("thread_id", threadId)
+      .neq("sender_id", currentUserId)
+      .eq("seen", false);
+  } catch (err) {
+    console.warn("Error marking messages seen:", err);
+  }
+}
+
 export function subscribeToSupabaseThread(
   threadId: string,
   currentUserId: string,
-  onNewMessage: (msg: ChatMessage) => void,
+  onMessageChange: (msg: ChatMessage, eventType: "INSERT" | "UPDATE" | "DELETE") => void,
 ) {
   if (!isSupabaseConfigured || !threadId) {
     return () => {};
@@ -134,16 +218,21 @@ export function subscribeToSupabaseThread(
     .on(
       "postgres_changes",
       {
-        event: "INSERT",
+        event: "*",
         schema: "public",
         table: "messages",
         filter: `thread_id=eq.${threadId}`,
       },
       (payload) => {
-        if (payload.new) {
+        if (payload.eventType === "DELETE") {
+          const oldRow = payload.old as { id?: string };
+          if (oldRow?.id) {
+            onMessageChange({ id: oldRow.id, threadId, from: "", text: "", time: "" }, "DELETE");
+          }
+        } else if (payload.new) {
           const newRow = payload.new as SupabaseMessageRow;
           const formattedMsg = rowToChatMessage(newRow, currentUserId);
-          onNewMessage(formattedMsg);
+          onMessageChange(formattedMsg, payload.eventType as "INSERT" | "UPDATE");
         }
       },
     )

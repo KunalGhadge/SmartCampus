@@ -49,6 +49,8 @@ import {
   subscribeToSupabasePresence,
   fetchUserChatThreads,
   subscribeToUserNewMessages,
+  toggleSupabaseMessageReaction,
+  markSupabaseThreadSeen,
 } from "@/lib/supabase-chat";
 import { askCampusAI } from "@/lib/groq-ai";
 import {
@@ -160,6 +162,7 @@ function ChatPage() {
   const [pending, setPending] = useState<ChatAttachment[]>([]);
   const [typing, setTyping] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [activeMobileMessageId, setActiveMobileMessageId] = useState<string | null>(null);
   const activeIdRef = useRef(activeId);
   const messagesRef = useRef(messages);
 
@@ -464,6 +467,9 @@ function ChatPage() {
       return;
     }
 
+    // Mark messages in active thread as seen
+    void markSupabaseThreadSeen(activeId, user.uid);
+
     // 2. Fetch and merge latest Supabase messages
     let isMounted = true;
     void fetchSupabaseThreadMessages(activeId, user.uid).then((fetched) => {
@@ -479,18 +485,37 @@ function ChatPage() {
       }
     });
 
-    const unsubscribe = subscribeToSupabaseThread(activeId, user.uid, (newMsg) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === newMsg.id)) return prev;
-        const next = [...prev, newMsg];
-        saveCachedThreadMessages(activeId, next);
-        return next;
-      });
-      setThreads((prevThreads) =>
-        prevThreads.map((t) =>
-          t.id === activeId ? { ...t, lastMsg: newMsg.text, time: newMsg.time } : t,
-        ),
-      );
+    const unsubscribe = subscribeToSupabaseThread(activeId, user.uid, (newMsg, eventType) => {
+      if (eventType === "DELETE") {
+        setMessages((prev) => {
+          const next = prev.filter((m) => m.id !== newMsg.id);
+          saveCachedThreadMessages(activeId, next);
+          return next;
+        });
+      } else if (eventType === "UPDATE") {
+        setMessages((prev) => {
+          const next = prev.map((m) => (m.id === newMsg.id ? { ...m, ...newMsg } : m));
+          saveCachedThreadMessages(activeId, next);
+          return next;
+        });
+      } else {
+        // INSERT
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === newMsg.id)) return prev;
+          const next = [...prev, newMsg];
+          saveCachedThreadMessages(activeId, next);
+          return next;
+        });
+        setThreads((prevThreads) =>
+          prevThreads.map((t) =>
+            t.id === activeId ? { ...t, lastMsg: newMsg.text, time: newMsg.time } : t,
+          ),
+        );
+        // If message is from the peer and we have thread open, mark it seen
+        if (newMsg.from !== "me" && newMsg.from !== currentUser.id && user?.uid) {
+          void markSupabaseThreadSeen(activeId, user.uid);
+        }
+      }
     });
 
     socket.emit("chat:thread:join", {
@@ -551,7 +576,45 @@ function ChatPage() {
   };
 
   const toggleReaction = (messageId: string, emoji: string) => {
-    socket.emit("chat:message:react", { threadId: activeId, messageId, emoji, user: currentUser });
+    // 1. Optimistically update local message reactions
+    setMessages((prev) => {
+      const next = prev.map((m) => {
+        if (m.id !== messageId) return m;
+        const currentReactions = { ...(m.reactions || {}) };
+        const existing = currentReactions[emoji] || { count: 0, mine: false };
+        if (existing.mine) {
+          const newCount = existing.count - 1;
+          if (newCount <= 0) {
+            delete currentReactions[emoji];
+          } else {
+            currentReactions[emoji] = { count: newCount, mine: false };
+          }
+        } else {
+          currentReactions[emoji] = { count: existing.count + 1, mine: true };
+        }
+        return {
+          ...m,
+          reactions: Object.keys(currentReactions).length ? currentReactions : undefined,
+        };
+      });
+      saveCachedThreadMessages(activeId, next);
+      return next;
+    });
+
+    // 2. Persist to Supabase
+    if (user?.uid) {
+      void toggleSupabaseMessageReaction(messageId, emoji, user.uid);
+    }
+
+    // 3. Socket broadcast if connected
+    if (socket.connected) {
+      socket.emit("chat:message:react", {
+        threadId: activeId,
+        messageId,
+        emoji,
+        user: currentUser,
+      });
+    }
   };
 
   const beginReply = (m: ChatMessage) =>
@@ -894,23 +957,26 @@ function ChatPage() {
               {messages.map((m, i) => {
                 const isMe = m.from === "me" || m.from === currentUser.id;
                 const reply = m.replyTo ? messageById.get(m.replyTo.id) : null;
+                const isSentByMe = m.from === "me" || m.from === currentUser.id;
                 const timeMeta = (
                   <div
                     className={cn(
-                      "mt-1 flex items-center justify-end gap-1 text-[10px] leading-none",
-                      isMe ? "opacity-75" : "text-muted-foreground",
+                      "mt-1 flex items-center justify-end gap-1.5 text-[10px] leading-none select-none",
+                      isMe ? "opacity-90" : "text-muted-foreground",
                     )}
                   >
-                    {m.edited ? <span className="opacity-80">edited</span> : null}
+                    {m.edited ? <span className="opacity-80 text-[9px]">edited</span> : null}
                     <span>{m.time}</span>
-                    {isMe ? (
-                      <span className="ml-1 inline-flex items-center">
+                    {isSentByMe ? (
+                      <span className="ml-0.5 inline-flex items-center">
                         {m.delivery === "seen" ? (
-                          <CheckCheck className="h-3 w-3" />
-                        ) : m.delivery === "delivered" ? (
-                          <CheckCheck className="h-3 w-3 opacity-70" />
+                          <span className="inline-flex items-center text-emerald-400 dark:text-emerald-300 font-bold" title="Seen">
+                            <CheckCheck className="h-3.5 w-3.5 stroke-[2.5]" />
+                          </span>
                         ) : (
-                          <Check className="h-3 w-3 opacity-70" />
+                          <span className="inline-flex items-center opacity-70" title="Sent">
+                            <Check className="h-3 w-3 stroke-[2.5]" />
+                          </span>
                         )}
                       </span>
                     ) : null}
@@ -934,26 +1000,37 @@ function ChatPage() {
                     ) : null}
 
                     <div className={cn("group relative max-w-[78%]", isMe && "items-end")}>
-                      {/* Hover actions */}
+                      {/* Hover & Mobile Tap Actions */}
                       <div
                         className={cn(
-                          "pointer-events-none absolute -top-9 flex items-center gap-1 opacity-0 transition",
-                          "group-hover:pointer-events-auto group-hover:opacity-100",
+                          "absolute -top-9 flex items-center gap-1 transition z-10",
+                          activeMobileMessageId === m.id
+                            ? "opacity-100 pointer-events-auto"
+                            : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100",
                           isMe ? "right-0" : "left-0",
                         )}
                       >
-                        <div className="flex items-center gap-1 rounded-full border border-border bg-card/90 px-1.5 py-1 shadow-soft backdrop-blur">
-                          {["👍", "❤️", "😂"].map((e) => (
-                            <button
-                              key={e}
-                              type="button"
-                              onClick={() => toggleReaction(m.id, e)}
-                              className="grid h-7 w-7 place-items-center rounded-full text-sm transition hover:bg-secondary"
-                              aria-label={`React ${e}`}
-                            >
-                              {e}
-                            </button>
-                          ))}
+                        <div className="flex items-center gap-1 rounded-full border border-border bg-card/95 px-1.5 py-1 shadow-soft backdrop-blur">
+                          {["👍", "❤️", "😂", "🔥", "👏"].map((e) => {
+                            const hasReacted = Boolean(m.reactions?.[e]?.mine);
+                            return (
+                              <button
+                                key={e}
+                                type="button"
+                                onClick={(evt) => {
+                                  evt.stopPropagation();
+                                  toggleReaction(m.id, e);
+                                }}
+                                className={cn(
+                                  "grid h-7 w-7 place-items-center rounded-full text-sm transition hover:scale-110",
+                                  hasReacted ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-secondary",
+                                )}
+                                aria-label={`React ${e}`}
+                              >
+                                {e}
+                              </button>
+                            );
+                          })}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <button
@@ -988,8 +1065,13 @@ function ChatPage() {
                       </div>
 
                       <div
+                        onClick={() =>
+                          setActiveMobileMessageId(
+                            activeMobileMessageId === m.id ? null : m.id,
+                          )
+                        }
                         className={cn(
-                          "rounded-2xl px-4 py-2.5 text-sm shadow-soft transition",
+                          "rounded-2xl px-4 py-2.5 text-sm shadow-soft transition cursor-pointer select-text",
                           isMe
                             ? "bg-brand-gradient text-primary-foreground"
                             : "border border-border bg-card hover:border-border/80",
@@ -1066,16 +1148,24 @@ function ChatPage() {
                               <button
                                 key={emoji}
                                 type="button"
-                                onClick={() => toggleReaction(m.id, emoji)}
+                                onClick={(evt) => {
+                                  evt.stopPropagation();
+                                  toggleReaction(m.id, emoji);
+                                }}
+                                title={meta.mine ? "Click to remove reaction" : "Click to react"}
                                 className={cn(
-                                  "inline-flex items-center gap-1 rounded-full border border-border/50 bg-background/20 px-2 py-1 text-[11px] transition",
+                                  "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold transition active:scale-95",
                                   meta.mine
-                                    ? "border-primary/40 bg-primary/10"
-                                    : "hover:bg-secondary/40",
+                                    ? isMe
+                                      ? "border-primary-foreground/40 bg-primary-foreground/20 text-primary-foreground shadow-sm"
+                                      : "border-primary/40 bg-primary/15 text-primary shadow-sm"
+                                    : isMe
+                                      ? "border-primary-foreground/20 bg-primary-foreground/10 text-primary-foreground/80 hover:bg-primary-foreground/20"
+                                      : "border-border/60 bg-secondary/50 text-foreground hover:bg-secondary",
                                 )}
                               >
                                 <span className="text-sm leading-none">{emoji}</span>
-                                <span className="tabular-nums">{meta.count}</span>
+                                <span className="tabular-nums font-bold">{meta.count}</span>
                               </button>
                             ))}
                           </div>
