@@ -31,15 +31,25 @@ export function buildFallbackUserProfile(user: User): UserProfile {
     }
   }
 
+  const college =
+    cached.college && cached.college !== "SmartCampus University"
+      ? cached.college
+      : "MGM CET (Engineering)";
+
+  const department =
+    cached.department && cached.department !== "General"
+      ? cached.department
+      : "Computer Engineering (CSE)";
+
   return {
     firebaseUid: user.uid,
     email: user.email ?? null,
     displayName: cached.displayName || user.displayName || null,
     fullName: cached.fullName || user.displayName || null,
     photoUrl: cached.photoUrl || user.photoURL || null,
-    department: cached.department || "Computer Engineering (CSE)",
-    college: cached.college || "MGM CET (Engineering)",
-    campus: cached.campus || cached.college || "MGM CET (Engineering)",
+    department,
+    college,
+    campus: cached.campus || college,
     graduationYear: cached.graduationYear || "2026",
     emailVerified: user.emailVerified,
     createdAt: user.metadata.creationTime ?? null,
@@ -60,14 +70,24 @@ export async function fetchLiveUserProfile(user: User): Promise<UserProfile> {
       .maybeSingle();
 
     if (!error && data) {
+      const college =
+        data.college && data.college !== "SmartCampus University"
+          ? data.college
+          : fallback.college;
+
+      const department =
+        data.department && data.department !== "General"
+          ? data.department
+          : fallback.department;
+
       const profile: UserProfile = {
         ...fallback,
         displayName: data.display_name || data.full_name || fallback.displayName,
         fullName: data.full_name || data.display_name || fallback.fullName,
         photoUrl: data.avatar_url || fallback.photoUrl,
-        department: data.department || fallback.department,
-        college: data.college || fallback.college,
-        campus: data.campus || data.college || fallback.campus,
+        department,
+        college,
+        campus: data.campus && data.campus !== "SmartCampus University" ? data.campus : college,
         graduationYear: data.graduation_year || fallback.graduationYear,
         emailVerified: Boolean(data.email_verified ?? fallback.emailVerified),
       };

@@ -22,8 +22,14 @@ export function formatProfileDate(value: string | number | null | undefined) {
 export function AccountOverview({ profile }: { profile: any }) {
   const [editOpen, setEditOpen] = useState(false);
   const email = profile?.email ?? "No email on file";
-  const department = profile?.department || "Computer Engineering (CSE)";
-  const college = profile?.college || "MGM CET (Engineering)";
+  const department =
+    profile?.department && profile.department !== "General"
+      ? profile.department
+      : "Computer Engineering (CSE)";
+  const college =
+    profile?.college && profile.college !== "SmartCampus University"
+      ? profile.college
+      : "MGM CET (Engineering)";
   const graduationYear = profile?.graduationYear ? `Class of ${profile.graduationYear}` : "Class of 2026";
 
   return (

@@ -78,8 +78,16 @@ export function EditProfileModal({ open, onOpenChange }: EditProfileModalProps) 
     if (profile) {
       setDisplayName(profile.displayName || profile.fullName || "");
       setPhotoUrl(profile.photoUrl || PRESET_AVATARS[0]);
-      setDepartment(profile.department || "Computer Engineering (CSE)");
-      setCollege(profile.college || "MGM CET (Engineering)");
+      setDepartment(
+        profile.department && profile.department !== "General"
+          ? profile.department
+          : "Computer Engineering (CSE)"
+      );
+      setCollege(
+        profile.college && profile.college !== "SmartCampus University"
+          ? profile.college
+          : "MGM CET (Engineering)"
+      );
       setGraduationYear(profile.graduationYear || "2026");
     }
   }, [profile, open]);
