@@ -292,6 +292,36 @@ export async function createSupabaseItemRequest(payload: {
   return data?.id || null;
 }
 
+export async function fetchSupabaseUserItemRequests(authorUid: string): Promise<ItemRequest[]> {
+  if (!isSupabaseConfigured || !authorUid) return [];
+  const { data, error } = await supabase
+    .from("item_requests")
+    .select("*")
+    .eq("author_id", authorUid)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching user item requests:", error);
+    return [];
+  }
+
+  return (data as SupabaseItemRequestRow[]).map(supabaseRowToItemRequest);
+}
+
+export async function deleteSupabaseItemRequest(requestId: string): Promise<boolean> {
+  if (!isSupabaseConfigured || !requestId) return false;
+  const { error } = await supabase
+    .from("item_requests")
+    .delete()
+    .eq("id", requestId);
+
+  if (error) {
+    console.error("Error deleting item request:", error);
+    return false;
+  }
+  return true;
+}
+
 export async function uploadImageToSupabase(
   bucket: "listing-images" | "avatars",
   file: File,

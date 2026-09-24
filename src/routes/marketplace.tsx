@@ -1,5 +1,19 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Search, SlidersHorizontal, X, ChevronDown, Check, MapPin, HandHeart } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Search,
+  SlidersHorizontal,
+  X,
+  ChevronDown,
+  Check,
+  MapPin,
+  HandHeart,
+  ShoppingBag,
+  Clock,
+  IndianRupee,
+  GraduationCap,
+  BadgeCheck,
+  MessageCircle,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/navbar";
@@ -7,27 +21,35 @@ import { Footer } from "@/components/footer";
 import { ProductCard } from "@/components/product-card";
 import { CategoryIcon } from "@/components/category-icon";
 import { Button } from "@/components/ui/button";
-import { type Category } from "@/lib/mock-data";
+import { type Category, type ItemRequest } from "@/lib/mock-data";
 import { categorySummaries, useCatalog } from "@/lib/catalog";
+import { useCampusItemRequests } from "@/lib/item-requests-catalog";
 import { RequestItemModal } from "@/components/request-item-modal";
 import { cn } from "@/lib/utils";
 import { CAMPUSES } from "@/lib/campus";
+import { toast } from "sonner";
 
-type SearchParams = { category?: string };
+type SearchParams = { category?: string; tab?: string };
 
 export const Route = createFileRoute("/marketplace")({
   component: MarketplacePage,
   validateSearch: (s: Record<string, unknown>): SearchParams => ({
     category: typeof s.category === "string" ? s.category : undefined,
+    tab: typeof s.tab === "string" ? s.tab : undefined,
   }),
 });
 
 function MarketplacePage() {
   const search = Route.useSearch();
   const { products, loading, firestoreError } = useCatalog();
+  const { requests, loading: requestsLoading } = useCampusItemRequests();
   const categories = useMemo(() => categorySummaries(products), [products]);
 
+  const [activeTab, setActiveTab] = useState<"listings" | "requests">(
+    search.tab === "requests" ? "requests" : "listings",
+  );
   const [requestModalOpen, setRequestModalOpen] = useState(false);
+  const [provideFor, setProvideFor] = useState<ItemRequest | null>(null);
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<Category | null>(
     (search.category as Category) ?? null,
@@ -107,6 +129,31 @@ function MarketplacePage() {
     verifiedOnly,
   ]);
 
+  const filteredRequests = useMemo(() => {
+    return requests.filter((r) => {
+      if (activeCat && r.category !== activeCat) return false;
+      if (departments.length) {
+        const dept = r.department ?? "";
+        if (!dept || !departments.includes(dept)) return false;
+      }
+      if (selectedCampuses.length) {
+        const hay = `${r.campus} ${r.department ?? ""}`.toLowerCase();
+        const matchCampus = selectedCampuses.some((c) => hay.includes(c.toLowerCase()));
+        if (!matchCampus) return false;
+      }
+      if (query) {
+        const q = query.toLowerCase();
+        const match =
+          r.itemName.toLowerCase().includes(q) ||
+          r.description.toLowerCase().includes(q) ||
+          r.category.toLowerCase().includes(q) ||
+          r.student.name.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      return true;
+    });
+  }, [requests, activeCat, departments, selectedCampuses, query]);
+
   const toggleArrayItem = (
     setter: React.Dispatch<React.SetStateAction<string[]>>,
     item: string,
@@ -133,7 +180,11 @@ function MarketplacePage() {
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search MGM College listings…"
+                  placeholder={
+                    activeTab === "requests"
+                      ? "Search student requests, notes, gadgets..."
+                      : "Search MGM College listings…"
+                  }
                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
               </div>
@@ -153,16 +204,46 @@ function MarketplacePage() {
                 >
                   <SlidersHorizontal className="h-4 w-4" /> Filters
                 </button>
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as typeof sort)}
-                  className="flex-1 rounded-full border border-border bg-card px-4 py-3 text-sm shadow-soft outline-none sm:flex-none"
-                >
-                  <option value="new">Newest</option>
-                  <option value="low">Price: low to high</option>
-                  <option value="high">Price: high to low</option>
-                </select>
+                {activeTab === "listings" && (
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as typeof sort)}
+                    className="flex-1 rounded-full border border-border bg-card px-4 py-3 text-sm shadow-soft outline-none sm:flex-none"
+                  >
+                    <option value="new">Newest</option>
+                    <option value="low">Price: low to high</option>
+                    <option value="high">Price: high to low</option>
+                  </select>
+                )}
               </div>
+            </div>
+
+            {/* Top View Selector Tabs */}
+            <div className="mt-8 flex items-center gap-2 border-b border-border/70">
+              <button
+                onClick={() => setActiveTab("listings")}
+                className={cn(
+                  "flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition -mb-px",
+                  activeTab === "listings"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <ShoppingBag className="h-4 w-4" />
+                Browse Catalog ({filtered.length})
+              </button>
+              <button
+                onClick={() => setActiveTab("requests")}
+                className={cn(
+                  "flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-semibold transition -mb-px",
+                  activeTab === "requests"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <HandHeart className="h-4 w-4" />
+                Student Requests ({filteredRequests.length})
+              </button>
             </div>
           </div>
         </section>
@@ -433,73 +514,313 @@ function MarketplacePage() {
           </aside>
 
           <section>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Showing <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-                listings
-                {activeCat && (
-                  <>
-                    {" "}
-                    in <span className="font-semibold text-foreground">{activeCat}</span>
-                  </>
+            {activeTab === "listings" ? (
+              <>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Showing <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
+                    listings
+                    {activeCat && (
+                      <>
+                        {" "}
+                        in <span className="font-semibold text-foreground">{activeCat}</span>
+                      </>
+                    )}
+                  </p>
+                  {(activeCat || conditions.length || verifiedOnly || query) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setActiveCat(null);
+                        setConditions([]);
+                        setVerifiedOnly(false);
+                        setQuery("");
+                      }}
+                    >
+                      <X className="h-4 w-4" /> Clear
+                    </Button>
+                  )}
+                </div>
+
+                {firestoreError && (
+                  <div className="mb-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
+                    <p className="text-sm font-medium text-destructive">
+                      Firestore connection issue
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Showing cached listings only. Live updates unavailable.
+                    </p>
+                  </div>
                 )}
-              </p>
-              {(activeCat || conditions.length || verifiedOnly || query) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setActiveCat(null);
-                    setConditions([]);
-                    setVerifiedOnly(false);
-                    setQuery("");
-                  }}
-                >
-                  <X className="h-4 w-4" /> Clear
-                </Button>
-              )}
-            </div>
 
-            {firestoreError && (
-              <div className="mb-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
-                <p className="text-sm font-medium text-destructive">
-                  Firestore connection issue
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Showing cached listings only. Live updates unavailable.
-                </p>
-              </div>
-            )}
+                {loading && filtered.length === 0 ? (
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+                    {[...Array(8)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-48 rounded-2xl border border-border bg-secondary/30 animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <EmptyState />
+                ) : (
+                  <motion.div
+                    layout
+                    className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+                  >
+                    {filtered.map((p, i) => (
+                      <ProductCard key={p.id} product={p} index={i} />
+                    ))}
+                  </motion.div>
+                )}
 
-            {loading && filtered.length === 0 ? (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-                {[...Array(8)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-48 rounded-2xl border border-border bg-secondary/30 animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : filtered.length === 0 ? (
-              <EmptyState />
+                <ListingCountFooter total={filtered.length} />
+              </>
             ) : (
-              <motion.div
-                layout
-                className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-              >
-                {filtered.map((p, i) => (
-                  <ProductCard key={p.id} product={p} index={i} />
-                ))}
-              </motion.div>
-            )}
+              /* Student Requests Tab */
+              <>
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Showing{" "}
+                    <span className="font-semibold text-foreground">
+                      {filteredRequests.length}
+                    </span>{" "}
+                    active student request{filteredRequests.length === 1 ? "" : "s"}
+                    {activeCat && (
+                      <>
+                        {" "}
+                        in <span className="font-semibold text-foreground">{activeCat}</span>
+                      </>
+                    )}
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setRequestModalOpen(true)}
+                    className="rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90"
+                  >
+                    <HandHeart className="mr-1.5 h-3.5 w-3.5" /> Post Request
+                  </Button>
+                </div>
 
-            <ListingCountFooter total={filtered.length} />
+                {requestsLoading && filteredRequests.length === 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-56 rounded-2xl border border-border bg-secondary/30 animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : filteredRequests.length === 0 ? (
+                  <div className="grid place-items-center rounded-2xl border border-dashed border-border bg-card py-20 text-center">
+                    <div className="grid h-14 w-14 place-items-center rounded-2xl bg-secondary text-foreground shadow-soft">
+                      <HandHeart className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold">No requests found</h3>
+                    <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                      Need a textbook, lab drafter, or component? Post a request and campus peers will reach out.
+                    </p>
+                    <Button
+                      onClick={() => setRequestModalOpen(true)}
+                      className="mt-5 rounded-full bg-brand-gradient text-primary-foreground shadow-soft"
+                    >
+                      Post a Request
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {filteredRequests.map((req, i) => (
+                      <MarketplaceRequestCard
+                        key={req.id}
+                        request={req}
+                        index={i}
+                        onProvide={() => setProvideFor(req)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </section>
         </div>
       </main>
       <RequestItemModal open={requestModalOpen} onClose={() => setRequestModalOpen(false)} />
+      <MarketplaceProvideModal request={provideFor} onClose={() => setProvideFor(null)} />
       <Footer />
     </div>
+  );
+}
+
+function MarketplaceRequestCard({
+  request,
+  index,
+  onProvide,
+}: {
+  request: ItemRequest;
+  index: number;
+  onProvide: () => void;
+}) {
+  const urgencyColors: Record<string, string> = {
+    Urgent: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30",
+    High: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30",
+    Medium: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+    Low: "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30",
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-soft transition hover:shadow-elegant"
+    >
+      <div>
+        <div className="flex items-center justify-between">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+              urgencyColors[request.urgency] || urgencyColors.Medium,
+            )}
+          >
+            {request.urgency === "Urgent" && "🔥"} {request.urgency}
+          </span>
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" /> {request.postedAgo || "Recently"}
+          </span>
+        </div>
+
+        <h3 className="mt-3 text-base font-semibold leading-snug">{request.itemName}</h3>
+        <p className="mt-1.5 line-clamp-2 text-xs text-muted-foreground">
+          {request.description || "No extra description provided."}
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+            <IndianRupee className="h-3 w-3" /> ₹{request.budgetMin.toLocaleString("en-IN")} - ₹
+            {request.budgetMax.toLocaleString("en-IN")}
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+            <GraduationCap className="h-3 w-3" /> {request.department || "General"}
+          </span>
+        </div>
+
+        <div className="mt-2 text-xs text-muted-foreground">
+          Preferred: <span className="font-medium text-foreground">{request.condition}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+        <div className="flex items-center gap-2">
+          <img
+            src={
+              request.student.avatar ||
+              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(request.id)}`
+            }
+            alt=""
+            className="h-6 w-6 rounded-full"
+          />
+          <span className="text-xs font-medium text-foreground">{request.student.name}</span>
+        </div>
+        <Button
+          size="sm"
+          onClick={onProvide}
+          className="rounded-full bg-brand-gradient px-3 py-1 text-xs text-primary-foreground shadow-soft hover:opacity-90"
+        >
+          I Can Provide
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+function MarketplaceProvideModal({
+  request,
+  onClose,
+}: {
+  request: ItemRequest | null;
+  onClose: () => void;
+}) {
+  const navigate = useNavigate();
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    setSending(true);
+    await new Promise((r) => setTimeout(r, 300));
+    setSending(false);
+    toast.success("Draft ready", {
+      description: `Opening message thread with ${request?.student.name}.`,
+    });
+    setMessage("");
+    onClose();
+    void navigate({
+      to: "/chat",
+      search: { peerUid: undefined, peerName: undefined, peerAvatar: undefined },
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {request && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={(e) => e.target === e.currentTarget && onClose()}
+        >
+          <div className="absolute inset-0 bg-foreground/40 backdrop-blur-sm" />
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+            transition={{ duration: 0.25 }}
+            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-elegant"
+          >
+            <div className="absolute left-0 right-0 top-0 h-1 bg-brand-gradient" />
+            <div className="p-6">
+              <h3 className="text-base font-semibold">Respond to request</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Let <span className="font-medium text-foreground">{request.student.name}</span> know
+                you can provide:
+              </p>
+              <div className="mt-3 rounded-xl border border-border bg-secondary/50 p-3">
+                <div className="text-sm font-medium">{request.itemName}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Budget: ₹{request.budgetMin.toLocaleString("en-IN")} - ₹
+                  {request.budgetMax.toLocaleString("en-IN")}
+                </div>
+              </div>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Hi! I have this item available. It's in great condition and I can meet you on campus..."
+                rows={3}
+                className="mt-4 w-full resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={!message.trim() || sending}
+                  onClick={handleSend}
+                  className="rounded-full bg-brand-gradient px-5 text-primary-foreground shadow-soft hover:opacity-90"
+                >
+                  <MessageCircle className="mr-1.5 h-3.5 w-3.5" />
+                  Send Message
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

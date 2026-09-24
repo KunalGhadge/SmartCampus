@@ -14,12 +14,18 @@ import {
   Tag,
   Percent,
   Trash2,
+  HandHeart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { type Category, type Product } from "@/lib/mock-data";
+import { type Category, type Product, type ItemRequest } from "@/lib/mock-data";
 import { createListing, fetchListingsBySeller } from "@/lib/firestore-listings";
-import { updateSupabaseListingStatus, deleteSupabaseListing } from "@/lib/supabase-data";
+import {
+  updateSupabaseListingStatus,
+  deleteSupabaseListing,
+  fetchSupabaseUserItemRequests,
+  deleteSupabaseItemRequest,
+} from "@/lib/supabase-data";
 import { PRODUCT_CATEGORIES, useCatalog } from "@/lib/catalog";
 import { useCampus } from "@/lib/campus";
 import { useWishlist } from "@/lib/wishlist";
@@ -33,7 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { buildFallbackUserProfile, useCurrentUserProfile } from "@/lib/user-profile";
 import { useAuth } from "@/lib/auth";
 import { fetchUserChatThreads } from "@/lib/supabase-chat";
@@ -41,6 +47,7 @@ import type { ChatThread } from "@/lib/chat-socket";
 import { getUserRentals, saveUserRentals, requestRentalReturn, type CampusRental } from "@/lib/rentals";
 import AccountOverview from "@/components/account-overview";
 import { EditProfileModal } from "@/components/edit-profile-modal";
+import { RequestItemModal } from "@/components/request-item-modal";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard")({ component: DashboardPage });
@@ -75,8 +82,10 @@ function DashboardPage() {
   });
 
   const [listingOpen, setListingOpen] = useState(false);
+  const [requestItemModalOpen, setRequestItemModalOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [listingSubmitting, setListingSubmitting] = useState(false);
+  const [myRequests, setMyRequests] = useState<ItemRequest[]>([]);
   const [listingForm, setListingForm] = useState({
     title: "",
     price: "",
@@ -101,13 +110,21 @@ function DashboardPage() {
   const [returnNote, setReturnNote] = useState("");
   const profile = profileQuery.data ?? (user ? buildFallbackUserProfile(user) : null);
 
+  const loadUserRequests = useCallback(async () => {
+    if (!user?.uid) return;
+    const reqs = await fetchSupabaseUserItemRequests(user.uid);
+    setMyRequests(reqs);
+  }, [user?.uid]);
+
   useEffect(() => {
     if (!user?.uid) {
       setMyListings([]);
+      setMyRequests([]);
       return;
     }
     void fetchListingsBySeller(user.uid).then(setMyListings);
-  }, [user?.uid]);
+    void loadUserRequests();
+  }, [user?.uid, loadUserRequests]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -141,6 +158,17 @@ function DashboardPage() {
       toast.success("Listing removed successfully");
     } else {
       toast.error("Could not delete listing");
+    }
+  };
+
+  const handleDeleteRequest = async (requestId: string, itemName: string) => {
+    if (!confirm(`Are you sure you want to remove your request for "${itemName}"?`)) return;
+    const success = await deleteSupabaseItemRequest(requestId);
+    if (success) {
+      setMyRequests((prev) => prev.filter((r) => r.id !== requestId));
+      toast.success("Request removed successfully");
+    } else {
+      toast.error("Could not remove request");
     }
   };
 
@@ -286,6 +314,13 @@ function DashboardPage() {
               >
                 <Edit3 className="h-4 w-4 text-primary" /> Edit profile
               </Button>
+              <Button
+                variant="outline"
+                className="rounded-full flex items-center gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                onClick={() => setRequestItemModalOpen(true)}
+              >
+                <HandHeart className="h-4 w-4" /> Request item
+              </Button>
               <Link to="/marketplace">
                 <Button variant="outline" className="rounded-full">
                   Browse marketplace
@@ -307,14 +342,9 @@ function DashboardPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               { i: Package, label: "Your listings", v: String(myListings.length), t: "Live on campus" },
+              { i: HandHeart, label: "Your requests", v: String(myRequests.length), t: "Active wants" },
               { i: Heart, label: "Wishlist", v: String(wishlist.count), t: "Saved items" },
               { i: MessageCircle, label: "Messages", v: "Open", t: "Peer chat" },
-              {
-                i: TrendingUp,
-                label: "Catalog size",
-                v: String(products.length),
-                t: "Merged feed",
-              },
             ].map((s, i) => (
               <motion.div
                 key={s.label}
@@ -347,6 +377,12 @@ function DashboardPage() {
               <h3 className="text-sm font-semibold">Quick actions</h3>
               <p className="text-xs text-muted-foreground">Shortcuts tied to your account</p>
               <div className="mt-5 grid gap-3">
+                <Button
+                  onClick={() => setRequestItemModalOpen(true)}
+                  className="w-full justify-start rounded-xl bg-primary/10 text-primary hover:bg-primary/20 border border-primary/25"
+                >
+                  <HandHeart className="h-4 w-4" /> Post a wanted item request
+                </Button>
                 <Link to="/marketplace">
                   <Button variant="outline" className="w-full justify-start rounded-xl">
                     <ShoppingBag className="h-4 w-4" /> Browse marketplace
@@ -360,9 +396,6 @@ function DashboardPage() {
                     <MessageCircle className="h-4 w-4" /> Open messages
                   </Button>
                 </Link>
-                <Button className="w-full justify-start rounded-xl bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90">
-                  <BadgeCheck className="h-4 w-4" /> Verify profile status
-                </Button>
               </div>
             </div>
           </div>
@@ -558,6 +591,117 @@ function DashboardPage() {
                           </tr>
                         );
                       })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          {/* My Requested Items (Wanted Board) */}
+          <section className="mt-12">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <HandHeart className="h-5 w-5 text-primary" /> My Requested Items ({myRequests.length})
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Items you're looking for that campus sellers and peers can fulfill
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => setRequestItemModalOpen(true)}
+                className="rounded-full bg-brand-gradient text-primary-foreground shadow-soft hover:opacity-90"
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" /> Request Item
+              </Button>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/60 text-xs text-muted-foreground">
+                    <tr>
+                      <th className="px-5 py-3.5 text-left font-medium">Requested Item</th>
+                      <th className="px-5 py-3.5 text-left font-medium">Budget Range</th>
+                      <th className="px-5 py-3.5 text-left font-medium">Urgency</th>
+                      <th className="px-5 py-3.5 text-left font-medium">Campus / Department</th>
+                      <th className="px-5 py-3.5 text-left font-medium">Date Posted</th>
+                      <th className="px-5 py-3.5 text-right font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {myRequests.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-5 py-10 text-center text-sm text-muted-foreground"
+                        >
+                          You haven't requested any items yet. Need a book, drafter, or component? Click{" "}
+                          <button
+                            onClick={() => setRequestItemModalOpen(true)}
+                            className="font-semibold text-primary hover:underline"
+                          >
+                            Request Item
+                          </button>{" "}
+                          to broadcast to campus sellers.
+                        </td>
+                      </tr>
+                    ) : (
+                      myRequests.map((req) => (
+                        <tr key={req.id} className="hover:bg-secondary/30 transition">
+                          <td className="px-5 py-4">
+                            <div>
+                              <div className="font-semibold text-foreground">{req.itemName}</div>
+                              {req.description && (
+                                <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                                  {req.description}
+                                </div>
+                              )}
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
+                                <span className="font-medium text-foreground">{req.category}</span> · Preferred: {req.condition}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="font-semibold text-foreground">
+                              ₹{req.budgetMin.toLocaleString("en-IN")} - ₹{req.budgetMax.toLocaleString("en-IN")}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4">
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold",
+                                req.urgency === "Urgent" && "border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400",
+                                req.urgency === "High" && "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-400",
+                                req.urgency === "Medium" && "border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                                req.urgency === "Low" && "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
+                              )}
+                            >
+                              {req.urgency === "Urgent" && "🔥"} {req.urgency}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-xs text-muted-foreground">
+                            <div>{req.campus || campus || "Campus"}</div>
+                            <div className="text-[11px]">{req.department || "General"}</div>
+                          </td>
+                          <td className="px-5 py-4 text-xs text-muted-foreground">
+                            {req.postedAgo || "Recently"}
+                          </td>
+                          <td className="px-5 py-4 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => void handleDeleteRequest(req.id, req.itemName)}
+                              className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              title="Delete request"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
                     )}
                   </tbody>
                 </table>
@@ -1070,6 +1214,13 @@ function DashboardPage() {
         </div>
       </main>
       <EditProfileModal open={editProfileOpen} onOpenChange={setEditProfileOpen} />
+      <RequestItemModal
+        open={requestItemModalOpen}
+        onClose={() => {
+          setRequestItemModalOpen(false);
+          void loadUserRequests();
+        }}
+      />
       <Footer />
     </div>
   );
