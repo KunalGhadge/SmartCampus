@@ -343,9 +343,15 @@ create policy "Anyone can view listing images"
   using ( bucket_id = 'listing-images' );
 
 drop policy if exists "Authenticated users can upload listing images" on storage.objects;
-create policy "Authenticated users can upload listing images"
+drop policy if exists "Anyone can upload listing images" on storage.objects;
+create policy "Anyone can upload listing images"
   on storage.objects for insert
   with check ( bucket_id = 'listing-images' );
+
+drop policy if exists "Anyone can update listing images" on storage.objects;
+create policy "Anyone can update listing images"
+  on storage.objects for update
+  using ( bucket_id = 'listing-images' );
 
 drop policy if exists "Anyone can view avatars" on storage.objects;
 create policy "Anyone can view avatars"
@@ -353,7 +359,8 @@ create policy "Anyone can view avatars"
   using ( bucket_id = 'avatars' );
 
 drop policy if exists "Authenticated users can upload avatars" on storage.objects;
-create policy "Authenticated users can upload avatars"
+drop policy if exists "Anyone can upload avatars" on storage.objects;
+create policy "Anyone can upload avatars"
   on storage.objects for insert
   with check ( bucket_id = 'avatars' );
 

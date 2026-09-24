@@ -62,8 +62,12 @@ import {
 } from "@/lib/chat-socket";
 import { ChatMarkdown } from "@/components/chat-markdown";
 
-const getCachedThreadMessages = (threadId: string): ChatMessage[] => {
+const getCachedThreadMessages = (threadId: string, userId?: string): ChatMessage[] => {
   try {
+    if (userId) {
+      const userKey = localStorage.getItem(`smartcampus_thread_msgs_${userId}_${threadId}`);
+      if (userKey) return JSON.parse(userKey);
+    }
     const raw = localStorage.getItem(`smartcampus_thread_msgs_${threadId}`);
     return raw ? JSON.parse(raw) : [];
   } catch {
@@ -71,8 +75,11 @@ const getCachedThreadMessages = (threadId: string): ChatMessage[] => {
   }
 };
 
-const saveCachedThreadMessages = (threadId: string, msgs: ChatMessage[]) => {
+const saveCachedThreadMessages = (threadId: string, msgs: ChatMessage[], userId?: string) => {
   try {
+    if (userId) {
+      localStorage.setItem(`smartcampus_thread_msgs_${userId}_${threadId}`, JSON.stringify(msgs.slice(-100)));
+    }
     localStorage.setItem(`smartcampus_thread_msgs_${threadId}`, JSON.stringify(msgs.slice(-100)));
   } catch {
     // ignore

@@ -15,6 +15,12 @@ import {
   Percent,
   Trash2,
   HandHeart,
+  UploadCloud,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Loader2,
+  X,
+  Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,6 +31,7 @@ import {
   deleteSupabaseListing,
   fetchSupabaseUserItemRequests,
   deleteSupabaseItemRequest,
+  uploadListingImage,
 } from "@/lib/supabase-data";
 import { PRODUCT_CATEGORIES, useCatalog } from "@/lib/catalog";
 import { useCampus } from "@/lib/campus";
@@ -39,7 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { buildFallbackUserProfile, useCurrentUserProfile } from "@/lib/user-profile";
 import { useAuth } from "@/lib/auth";
 import { fetchUserChatThreads } from "@/lib/supabase-chat";
@@ -102,6 +109,9 @@ function DashboardPage() {
 
   const [returnOpen, setReturnOpen] = useState(false);
   const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
+  const [imageUploadMode, setImageUploadMode] = useState<"file" | "url">("file");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [returnDate, setReturnDate] = useState<string>(() => {
     const d = new Date();
     d.setDate(d.getDate() + 3);
@@ -193,6 +203,35 @@ function DashboardPage() {
     });
   }, [user?.uid]);
 
+  const handleImageFileChange = async (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Invalid file type", {
+        description: "Please upload an image file (PNG, JPG, JPEG, WebP).",
+      });
+      return;
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error("File too large", {
+        description: "Please select an image under 12MB.",
+      });
+      return;
+    }
+    setIsUploadingImage(true);
+    try {
+      const url = await uploadListingImage(file, user?.uid || "user");
+      if (url) {
+        setListingForm((f) => ({ ...f, image: url }));
+        toast.success("Image uploaded successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to process image");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   const submitNewListing = async () => {
     if (!user?.uid) return;
     const price = Number(listingForm.price);
@@ -203,7 +242,7 @@ function DashboardPage() {
       !listingForm.image.trim()
     ) {
       toast.error("Missing listing details", {
-        description: "Add a title, positive price, and cover image URL.",
+        description: "Add a title, positive price, and upload a product image.",
       });
       return;
     }
@@ -1138,15 +1177,150 @@ function DashboardPage() {
                     </div>
                   </div>
 
-                  <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
-                    Cover image URL *
-                    <input
-                      value={listingForm.image}
-                      onChange={(e) => setListingForm((f) => ({ ...f, image: e.target.value }))}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                    />
-                  </label>
+                  {/* Product Image Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-muted-foreground">
+                        Product Photo *
+                      </label>
+                      <div className="flex items-center gap-1 rounded-lg border border-border bg-muted/40 p-0.5 text-[11px] font-medium">
+                        <button
+                          type="button"
+                          onClick={() => setImageUploadMode("file")}
+                          className={cn(
+                            "flex items-center gap-1 rounded-md px-2.5 py-1 transition-all",
+                            imageUploadMode === "file"
+                              ? "bg-background text-foreground shadow-xs font-semibold"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <Camera className="h-3.5 w-3.5" />
+                          <span>Upload File</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setImageUploadMode("url")}
+                          className={cn(
+                            "flex items-center gap-1 rounded-md px-2.5 py-1 transition-all",
+                            imageUploadMode === "url"
+                              ? "bg-background text-foreground shadow-xs font-semibold"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <LinkIcon className="h-3.5 w-3.5" />
+                          <span>Paste URL</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {imageUploadMode === "file" ? (
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            void handleImageFileChange(file);
+                            if (fileInputRef.current) fileInputRef.current.value = "";
+                          }}
+                        />
+
+                        {isUploadingImage ? (
+                          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/40 bg-primary/5 py-8 text-center">
+                            <Loader2 className="h-7 w-7 animate-spin text-primary" />
+                            <p className="text-xs font-medium text-foreground">
+                              Optimizing & uploading image...
+                            </p>
+                            <span className="text-[11px] text-muted-foreground">
+                              Auto-compressing for fast campus loading
+                            </span>
+                          </div>
+                        ) : listingForm.image ? (
+                          <div className="relative overflow-hidden rounded-2xl border border-border bg-muted/20">
+                            <div className="relative aspect-video w-full max-h-48 overflow-hidden bg-black/5 flex items-center justify-center">
+                              <img
+                                src={listingForm.image}
+                                alt="Product preview"
+                                className="h-full w-full object-contain"
+                              />
+                            </div>
+                            <div className="flex items-center justify-between border-t border-border bg-card/90 px-3 py-2">
+                              <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                <BadgeCheck className="h-4 w-4" /> Photo ready
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => fileInputRef.current?.click()}
+                                  className="h-7 text-xs"
+                                >
+                                  Change Photo
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setListingForm((f) => ({ ...f, image: "" }))}
+                                  className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            onClick={() => fileInputRef.current?.click()}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              const file = e.dataTransfer.files?.[0] || null;
+                              void handleImageFileChange(file);
+                            }}
+                            className="group flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/80 bg-muted/20 p-6 text-center transition-all hover:border-primary/60 hover:bg-primary/5"
+                          >
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary transition-transform group-hover:scale-105">
+                              <UploadCloud className="h-6 w-6" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-foreground">
+                                Click to upload or drag & drop photo
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                JPG, PNG, WEBP from your phone camera or gallery (max 12MB)
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <input
+                          value={listingForm.image}
+                          onChange={(e) => setListingForm((f) => ({ ...f, image: e.target.value }))}
+                          placeholder="https://images.unsplash.com/photo-..."
+                          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                        />
+                        {listingForm.image && (
+                          <div className="relative aspect-video max-h-36 overflow-hidden rounded-xl border border-border bg-muted/20 flex items-center justify-center">
+                            <img
+                              src={listingForm.image}
+                              alt="URL Preview"
+                              className="h-full w-full object-contain"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src =
+                                  "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=80";
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
                     Description

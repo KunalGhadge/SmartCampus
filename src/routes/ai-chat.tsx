@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, ArrowLeft, Bot, Loader } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Send, ArrowLeft, Bot, Loader, Trash2, RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,38 @@ interface AIChatMessage {
   timestamp: Date;
 }
 
+const DEFAULT_WELCOME_MSG: AIChatMessage = {
+  id: "welcome",
+  text: "Yo! 👋 I'm your SmartCampus AI Assistant. I know all active items in the campus store, who's selling them, active student requests, and how to get anything sorted on CampusKart. What can I look up for you today?",
+  sender: "assistant",
+  timestamp: new Date(),
+};
+
+const getStoredAiMessages = (userId: string): AIChatMessage[] => {
+  try {
+    const raw = localStorage.getItem(`smartcampus_ai_chat_${userId}`);
+    if (!raw) return [DEFAULT_WELCOME_MSG];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return [DEFAULT_WELCOME_MSG];
+    return parsed.map((m: any) => ({
+      id: m.id || crypto.randomUUID(),
+      text: m.text || "",
+      sender: m.sender || "assistant",
+      timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+    }));
+  } catch {
+    return [DEFAULT_WELCOME_MSG];
+  }
+};
+
+const saveStoredAiMessages = (userId: string, msgs: AIChatMessage[]) => {
+  try {
+    localStorage.setItem(`smartcampus_ai_chat_${userId}`, JSON.stringify(msgs.slice(-80)));
+  } catch {
+    // ignore
+  }
+};
+
 function AIChatPage() {
   const navigate = useNavigate();
   const { user, loading } = useRequireAuth("/login");
@@ -39,32 +71,42 @@ function AIChatPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const [messages, setMessages] = useState<AIChatMessage[]>([
-    {
-      id: "welcome",
-      text: "Yo! 👋 I'm your SmartCampus AI Assistant. I know all active items in the campus store, who's selling them, active student requests, and how to get anything sorted on CampusKart. What can I look up for you today?",
-      sender: "assistant",
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<AIChatMessage[]>([DEFAULT_WELCOME_MSG]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  if (loading || !user) {
-    return (
-      <div className="flex h-screen flex-col bg-background">
-        <Navbar />
-        <div className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center px-6 py-10">
-          <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
-            Preparing your assistant session...
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Load user-isolated chat history on mount or auth change
+  useEffect(() => {
+    if (user?.uid) {
+      setMessages(getStoredAiMessages(user.uid));
+    }
+  }, [user?.uid]);
+
+  const updateAndPersistMessages = useCallback(
+    (updater: (prev: AIChatMessage[]) => AIChatMessage[]) => {
+      setMessages((prev) => {
+        const next = updater(prev);
+        if (user?.uid) {
+          saveStoredAiMessages(user.uid, next);
+        }
+        return next;
+      });
+    },
+    [user?.uid],
+  );
+
+  const clearChatHistory = () => {
+    if (confirm("Clear your AI chat history?")) {
+      const reset = [DEFAULT_WELCOME_MSG];
+      setMessages(reset);
+      if (user?.uid) {
+        saveStoredAiMessages(user.uid, reset);
+      }
+    }
+  };
 
   const addMessage = (text: string, sender: "user" | "assistant") => {
     const newMessage: AIChatMessage = {
@@ -73,7 +115,7 @@ function AIChatPage() {
       sender,
       timestamp: new Date(),
     };
-    setMessages((prev) => [...prev, newMessage]);
+    updateAndPersistMessages((prev) => [...prev, newMessage]);
   };
 
   const callAssistant = async (prompt: string) => {
@@ -126,6 +168,19 @@ function AIChatPage() {
     }
   }, [messages]);
 
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen flex-col bg-background">
+        <Navbar />
+        <div className="mx-auto flex w-full max-w-4xl flex-1 items-center justify-center px-6 py-10">
+          <div className="rounded-2xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">
+            Preparing your assistant session...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen flex-col bg-background">
       <Navbar />
@@ -175,6 +230,18 @@ function AIChatPage() {
                 </div>
               </div>
             </div>
+
+            {messages.length > 1 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearChatHistory}
+                className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Clear Chat</span>
+              </Button>
+            )}
           </div>
 
           {!botStatus.isOnline && (

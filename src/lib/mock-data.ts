@@ -64,7 +64,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000001",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Rhea Kulkarni",
       college: "MGM College",
@@ -93,7 +93,7 @@ export const products: Product[] = [
     condition: "Like New",
     sellerId: "a1111111-0000-4000-a000-000000000002",
     image:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Yash Tiwari",
       college: "MGM CET",
@@ -124,7 +124,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000003",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1587145820266-a5951ee6f620?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Mihir Jain",
       college: "MGM University",
@@ -155,7 +155,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000004",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Devansh Kapoor",
       college: "MGM College",
@@ -187,7 +187,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000005",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Sana Thomas",
       college: "MGM CET",
@@ -216,7 +216,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000006",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Ananya Sharma",
       college: "MGM University",
@@ -247,7 +247,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000007",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Ishaan Verma",
       college: "MGM College",
@@ -276,7 +276,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000008",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Tanvi Patel",
       college: "MGM CET",
@@ -306,7 +306,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000009",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1581090700227-1e37b190418e?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Rohan Das",
       college: "MGM College",
@@ -336,7 +336,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000010",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1561154464-82e9adf32764?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Sneha Rao",
       college: "MGM College",
@@ -369,7 +369,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000011",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Aditya Joshi",
       college: "MGM University",
@@ -400,7 +400,7 @@ export const products: Product[] = [
     sellerId: "a1111111-0000-4000-a000-000000000012",
     isDemo: true,
     image:
-      "https://images.unsplash.com/photo-1536353284924-9220c464e262?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&w=900&q=80",
     seller: {
       name: "Kabir Shah",
       college: "MGM CET",

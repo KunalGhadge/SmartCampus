@@ -146,6 +146,91 @@ export async function createSupabaseListing(payload: {
   return data?.id || null;
 }
 
+export async function compressImageFile(
+  file: File,
+  maxDim = 1200,
+  quality = 0.82,
+): Promise<{ blob: Blob; dataUrl: string }> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const src = e.target?.result as string;
+      if (!src) {
+        resolve({ blob: file, dataUrl: "" });
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve({ blob: file, dataUrl: src });
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        canvas.toBlob(
+          (blob) => {
+            resolve({ blob: blob || file, dataUrl });
+          },
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.onerror = () => resolve({ blob: file, dataUrl: src });
+      img.src = src;
+    };
+    reader.onerror = () => resolve({ blob: file, dataUrl: "" });
+    reader.readAsDataURL(file);
+  });
+}
+
+export async function uploadListingImage(file: File, userId: string): Promise<string> {
+  try {
+    const { blob, dataUrl } = await compressImageFile(file);
+    if (!isSupabaseConfigured) {
+      return dataUrl;
+    }
+    const cleanExt = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const fileName = `${userId || "anon"}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${cleanExt || "jpg"}`;
+
+    const { data, error } = await supabase.storage
+      .from("listing-images")
+      .upload(fileName, blob, {
+        contentType: blob.type || "image/jpeg",
+        upsert: true,
+      });
+
+    if (!error && data?.path) {
+      const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(data.path);
+      if (urlData?.publicUrl) {
+        return urlData.publicUrl;
+      }
+    }
+    return dataUrl;
+  } catch (err) {
+    console.warn("Storage upload fallback to dataURL:", err);
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string) || "");
+      reader.onerror = () => resolve("");
+      reader.readAsDataURL(file);
+    });
+  }
+}
+
 export async function updateSupabaseListingStatus(
   id: string,
   availability: "Available" | "Reserved" | "Sold",
