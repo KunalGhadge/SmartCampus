@@ -519,7 +519,22 @@ export async function fetchSupabaseProfiles(): Promise<
       return SEEDED_CAMPUS_PEERS;
     }
 
-    const dbProfiles = (data as SupabaseProfileRow[]).map((p) => {
+    type ProfileItem = {
+      firebaseUid: string;
+      displayName: string;
+      displayNameLower: string;
+      campusKey: string;
+      college?: string | null;
+      department?: string | null;
+      graduationYear?: string | null;
+      trustScore?: number | null;
+      badges?: string[] | null;
+      photoUrl: string | null;
+      emailVerified: boolean;
+      createdAt?: string | null;
+    };
+
+    const dbProfiles: ProfileItem[] = (data as SupabaseProfileRow[]).map((p) => {
       const name = p.display_name || p.full_name || p.email?.split("@")[0] || "Student";
       return {
         firebaseUid: p.id,
@@ -538,7 +553,7 @@ export async function fetchSupabaseProfiles(): Promise<
     });
 
     const knownIds = new Set(dbProfiles.map((p) => p.firebaseUid));
-    const merged = [...dbProfiles];
+    const merged: ProfileItem[] = [...dbProfiles];
     for (const seed of SEEDED_CAMPUS_PEERS) {
       if (!knownIds.has(seed.firebaseUid)) {
         merged.push(seed);

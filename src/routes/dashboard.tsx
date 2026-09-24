@@ -11,10 +11,15 @@ import {
   RotateCcw,
   CalendarDays,
   Edit3,
+  Tag,
+  Percent,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { type Category, type Product } from "@/lib/mock-data";
 import { createListing, fetchListingsBySeller } from "@/lib/firestore-listings";
+import { updateSupabaseListingStatus, deleteSupabaseListing } from "@/lib/supabase-data";
 import { PRODUCT_CATEGORIES, useCatalog } from "@/lib/catalog";
 import { useCampus } from "@/lib/campus";
 import { useWishlist } from "@/lib/wishlist";
@@ -75,6 +80,9 @@ function DashboardPage() {
   const [listingForm, setListingForm] = useState({
     title: "",
     price: "",
+    originalPrice: "",
+    negotiable: true,
+    availability: "Available" as Product["availability"],
     category: "Books" as Category,
     condition: "Good" as Product["condition"],
     image: "",
@@ -110,6 +118,30 @@ function DashboardPage() {
   const handleSignOut = async () => {
     await signOut();
     navigate({ to: "/" });
+  };
+
+  const handleStatusChange = async (listingId: string, newStatus: Product["availability"]) => {
+    const statusToSet = newStatus || "Available";
+    const success = await updateSupabaseListingStatus(listingId, statusToSet);
+    if (success) {
+      setMyListings((prev) =>
+        prev.map((item) => (item.id === listingId ? { ...item, availability: statusToSet } : item))
+      );
+      toast.success(`Listing status updated to ${statusToSet}`);
+    } else {
+      toast.error("Could not update listing status");
+    }
+  };
+
+  const handleDeleteListing = async (listingId: string, title: string) => {
+    if (!confirm(`Are you sure you want to remove "${title}"?`)) return;
+    const success = await deleteSupabaseListing(listingId);
+    if (success) {
+      setMyListings((prev) => prev.filter((item) => item.id !== listingId));
+      toast.success("Listing removed successfully");
+    } else {
+      toast.error("Could not delete listing");
+    }
   };
 
   const displayName = profile?.displayName ?? user?.displayName ?? "Student";
@@ -149,9 +181,13 @@ function DashboardPage() {
     }
     setListingSubmitting(true);
     try {
+      const origPrice = Number(listingForm.originalPrice);
       await createListing({
         title: listingForm.title.trim(),
         price,
+        originalPrice: Number.isFinite(origPrice) && origPrice > price ? origPrice : undefined,
+        negotiable: listingForm.negotiable,
+        availability: listingForm.availability,
         category: listingForm.category,
         condition: listingForm.condition,
         image: listingForm.image.trim(),
@@ -172,6 +208,9 @@ function DashboardPage() {
       setListingForm({
         title: "",
         price: "",
+        originalPrice: "",
+        negotiable: true,
+        availability: "Available",
         category: "Books",
         condition: "Good",
         image: "",
@@ -181,13 +220,13 @@ function DashboardPage() {
       });
       setListingOpen(false);
       toast.success("Listing published", {
-        description: "Your item is live for everyone browsing the catalog.",
+        description: "Your item is live with price discounts and availability options.",
       });
     } catch (e) {
       console.error(e);
       toast.error("Could not publish listing", {
         description:
-          e instanceof Error ? e.message : "Check Firestore rules and network, then try again.",
+          e instanceof Error ? e.message : "Check network, then try again.",
       });
     } finally {
       setListingSubmitting(false);
@@ -387,55 +426,142 @@ function DashboardPage() {
                 View all →
               </Link>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-border bg-card">
-              <table className="w-full text-sm">
-                <thead className="bg-secondary/60 text-xs text-muted-foreground">
-                  <tr>
-                    <th className="px-5 py-3 text-left font-medium">Item</th>
-                    <th className="px-5 py-3 text-left font-medium">Price</th>
-                    <th className="px-5 py-3 text-left font-medium">Views</th>
-                    <th className="px-5 py-3 text-left font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {myListings.length === 0 ? (
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-secondary/60 text-xs text-muted-foreground">
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-5 py-10 text-center text-sm text-muted-foreground"
-                      >
-                        No listings yet. Use{" "}
-                        <span className="font-medium text-foreground">New listing</span> to add your
-                        first item.
-                      </td>
+                      <th className="px-5 py-3.5 text-left font-medium">Item Details</th>
+                      <th className="px-5 py-3.5 text-left font-medium">Selling Price</th>
+                      <th className="px-5 py-3.5 text-left font-medium">Type</th>
+                      <th className="px-5 py-3.5 text-left font-medium">Availability / Status</th>
+                      <th className="px-5 py-3.5 text-right font-medium">Actions</th>
                     </tr>
-                  ) : (
-                    myListings.map((p) => (
-                      <tr key={p.id} className="hover:bg-secondary/30">
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={p.image}
-                              className="h-10 w-10 rounded-lg object-cover"
-                              alt=""
-                            />
-                            <span className="line-clamp-1 font-medium">{p.title}</span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3 font-semibold">
-                          ₹{p.price.toLocaleString("en-IN")}
-                        </td>
-                        <td className="px-5 py-3 text-muted-foreground">—</td>
-                        <td className="px-5 py-3">
-                          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[11px] font-semibold text-success">
-                            {p.availability ?? "Available"}
-                          </span>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {myListings.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-5 py-12 text-center text-sm text-muted-foreground"
+                        >
+                          No listings posted yet. Click{" "}
+                          <span className="font-semibold text-primary">New listing</span> above to post textbooks, gadgets, or campus notes.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      myListings.map((p) => {
+                        const discount =
+                          p.originalPrice && p.originalPrice > p.price
+                            ? Math.round((1 - p.price / p.originalPrice) * 100)
+                            : null;
+
+                        return (
+                          <tr key={p.id} className="hover:bg-secondary/30 transition">
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <img
+                                  src={p.image}
+                                  className="h-12 w-12 rounded-xl object-cover ring-1 ring-border bg-secondary shrink-0"
+                                  alt={p.title}
+                                />
+                                <div className="min-w-0">
+                                  <Link
+                                    to="/product/$id"
+                                    params={{ id: p.id }}
+                                    className="line-clamp-1 font-semibold text-foreground hover:text-primary transition"
+                                  >
+                                    {p.title}
+                                  </Link>
+                                  <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                    <span>{p.category}</span>
+                                    <span>·</span>
+                                    <span className="rounded bg-secondary px-1.5 py-0.2 text-[10px] font-medium">
+                                      {p.condition}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-foreground">
+                                  ₹{p.price.toLocaleString("en-IN")}
+                                </span>
+                                {p.originalPrice && p.originalPrice > p.price ? (
+                                  <div className="flex items-center gap-1.5 text-xs">
+                                    <span className="text-muted-foreground line-through">
+                                      ₹{p.originalPrice.toLocaleString("en-IN")}
+                                    </span>
+                                    {discount ? (
+                                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 text-[10px]">
+                                        {discount}% OFF
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                                {p.forRent && p.rentPerDay ? (
+                                  <span className="text-xs text-primary font-medium mt-0.5">
+                                    Rent: ₹{p.rentPerDay}/day
+                                  </span>
+                                ) : null}
+                              </div>
+                            </td>
+                            <td className="px-5 py-4">
+                              <div className="flex flex-wrap gap-1">
+                                {p.negotiable ? (
+                                  <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                                    Negotiable
+                                  </span>
+                                ) : (
+                                  <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-medium text-secondary-foreground">
+                                    Fixed
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-5 py-4">
+                              <select
+                                value={p.availability || "Available"}
+                                onChange={(e) =>
+                                  void handleStatusChange(
+                                    p.id,
+                                    e.target.value as Product["availability"],
+                                  )
+                                }
+                                className={cn(
+                                  "rounded-xl border px-3 py-1.5 text-xs font-semibold outline-none transition cursor-pointer",
+                                  (p.availability === "Available" || !p.availability) &&
+                                    "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+                                  p.availability === "Reserved" &&
+                                    "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                                  p.availability === "Sold" &&
+                                    "border-neutral-500/40 bg-neutral-500/10 text-neutral-600 dark:text-neutral-400",
+                                )}
+                              >
+                                <option value="Available">🟢 Available</option>
+                                <option value="Reserved">🟡 Reserved</option>
+                                <option value="Sold">⚪ Sold</option>
+                              </select>
+                            </td>
+                            <td className="px-5 py-4 text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => void handleDeleteListing(p.id, p.title)}
+                                className="h-8 w-8 p-0 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                aria-label="Delete listing"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </section>
 
@@ -716,36 +842,80 @@ function DashboardPage() {
             </Dialog>
 
             <Dialog open={listingOpen} onOpenChange={setListingOpen}>
-              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
                 <DialogHeader>
-                  <DialogTitle>New listing</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+                    <Tag className="h-5 w-5 text-primary" /> Create New Listing
+                  </DialogTitle>
                   <DialogDescription>
                     Listings are published in real-time and visible across CampusKart to all verified students.
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid gap-3 py-2">
-                  <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                    Title
+                <div className="grid gap-4 py-2">
+                  <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
+                    Title *
                     <input
                       value={listingForm.title}
                       onChange={(e) => setListingForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. Engineering Mathematics Vol 1 by BS Grewal"
                       className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                     />
                   </label>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                      Price (₹)
+                    <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
+                      Selling Price (₹) *
                       <input
                         type="number"
                         min={1}
                         value={listingForm.price}
                         onChange={(e) => setListingForm((f) => ({ ...f, price: e.target.value }))}
+                        placeholder="e.g. 450"
                         className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                       />
                     </label>
-                    <label className="space-y-1 text-xs font-semibold text-muted-foreground">
+
+                    <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
+                      Original / MRP Price (₹){" "}
+                      <span className="text-[11px] font-normal text-muted-foreground">
+                        (Optional for % OFF)
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={listingForm.originalPrice}
+                        onChange={(e) =>
+                          setListingForm((f) => ({ ...f, originalPrice: e.target.value }))
+                        }
+                        placeholder="e.g. 800"
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Live discount badge preview if originalPrice > price */}
+                  {Number(listingForm.originalPrice) > Number(listingForm.price) &&
+                    Number(listingForm.price) > 0 && (
+                      <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                        <Percent className="h-4 w-4" />
+                        <span>
+                          Calculated Discount:{" "}
+                          <strong>
+                            {Math.round(
+                              ((Number(listingForm.originalPrice) - Number(listingForm.price)) /
+                                Number(listingForm.originalPrice)) *
+                                100,
+                            )}
+                            % OFF
+                          </strong>{" "}
+                          (Buyers will see ₹{listingForm.originalPrice} crossed out)
+                        </span>
+                      </div>
+                    )}
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
                       Category
                       <select
                         value={listingForm.category}
@@ -761,74 +931,121 @@ function DashboardPage() {
                         ))}
                       </select>
                     </label>
+
+                    <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
+                      Condition
+                      <select
+                        value={listingForm.condition}
+                        onChange={(e) =>
+                          setListingForm((f) => ({
+                            ...f,
+                            condition: e.target.value as Product["condition"],
+                          }))
+                        }
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                      >
+                        {(["New", "Like New", "Good", "Fair"] as const).map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                   </div>
 
-                  <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                    Condition
-                    <select
-                      value={listingForm.condition}
-                      onChange={(e) =>
-                        setListingForm((f) => ({
-                          ...f,
-                          condition: e.target.value as Product["condition"],
-                        }))
-                      }
-                      className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                    >
-                      {(["New", "Like New", "Good", "Fair"] as const).map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
+                      Status / Availability
+                      <select
+                        value={listingForm.availability}
+                        onChange={(e) =>
+                          setListingForm((f) => ({
+                            ...f,
+                            availability: e.target.value as Product["availability"],
+                          }))
+                        }
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                      >
+                        <option value="Available">Available (Active for sale)</option>
+                        <option value="Reserved">Reserved (Holding / In Rental)</option>
+                        <option value="Sold">Sold (Archived)</option>
+                      </select>
+                    </label>
 
-                  <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                    Cover image URL
+                    <div className="flex flex-col justify-end">
+                      <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-background/60 p-2.5 text-sm font-medium transition hover:bg-muted/40">
+                        <input
+                          type="checkbox"
+                          checked={listingForm.negotiable}
+                          onChange={(e) =>
+                            setListingForm((f) => ({ ...f, negotiable: e.target.checked }))
+                          }
+                          className="h-4 w-4 rounded border-input text-primary accent-primary"
+                        />
+                        <div>
+                          <div className="text-xs font-semibold text-foreground">
+                            Price is Negotiable
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            Allows students to make counter offers
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
+                    Cover image URL *
                     <input
                       value={listingForm.image}
                       onChange={(e) => setListingForm((f) => ({ ...f, image: e.target.value }))}
-                      placeholder="https://…"
+                      placeholder="https://images.unsplash.com/..."
                       className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                     />
                   </label>
 
-                  <label className="space-y-1 text-xs font-semibold text-muted-foreground">
+                  <label className="space-y-1.5 text-xs font-semibold text-muted-foreground">
                     Description
                     <textarea
                       value={listingForm.description}
                       onChange={(e) =>
                         setListingForm((f) => ({ ...f, description: e.target.value }))
                       }
+                      placeholder="Mention details like edition, subject, any marks or notes, accessories included..."
                       rows={3}
                       className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
                     />
                   </label>
 
-                  <label className="flex cursor-pointer items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={listingForm.forRent}
-                      onChange={(e) => setListingForm((f) => ({ ...f, forRent: e.target.checked }))}
-                      className="rounded border-input"
-                    />
-                    Offer for rent (per day)
-                  </label>
-
-                  {listingForm.forRent ? (
-                    <label className="space-y-1 text-xs font-semibold text-muted-foreground">
-                      Rent per day (₹)
+                  <div className="space-y-3 rounded-xl border border-border/80 bg-muted/20 p-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
                       <input
-                        type="number"
-                        min={1}
-                        value={listingForm.rentPerDay}
+                        type="checkbox"
+                        checked={listingForm.forRent}
                         onChange={(e) =>
-                          setListingForm((f) => ({ ...f, rentPerDay: e.target.value }))
+                          setListingForm((f) => ({ ...f, forRent: e.target.checked }))
                         }
-                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                        className="h-4 w-4 rounded border-input text-primary accent-primary"
                       />
+                      <span>Offer this item for Rent (Rentable)</span>
                     </label>
-                  ) : null}
+
+                    {listingForm.forRent ? (
+                      <label className="block space-y-1 text-xs font-semibold text-muted-foreground">
+                        Rent per day (₹)
+                        <input
+                          type="number"
+                          min={1}
+                          value={listingForm.rentPerDay}
+                          onChange={(e) =>
+                            setListingForm((f) => ({ ...f, rentPerDay: e.target.value }))
+                          }
+                          placeholder="e.g. 50"
+                          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                        />
+                      </label>
+                    ) : null}
+                  </div>
                 </div>
 
                 <DialogFooter>
